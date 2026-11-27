@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# Keeps one model's report from a periodic architecture review.
+#
+#     record-architecture RUN MODEL REPORT
+#     record-architecture RUN MODEL - < report
+#
+# Writes <git common dir>/<app>-architecture/RUN/MODEL.md, beside the packet
+# `mix heartwood.architecture` wrote for that run, from the file REPORT or,
+# given "-", from standard input (so a reviewer needn't write a file of its
+# own). Jeff combines a run's reports into one entry in the architecture
+# docs' reviews.md.
+#
+# Refuses an empty report, a run with no packet, and a second report from
+# the same model for the same run: a model's first answer stands.
+set -euo pipefail
+
+run=${1:-}
+model=${2:-}
+report=${3:-}
+
+usage() {
+  echo "usage: $0 RUN MODEL REPORT, or $0 RUN MODEL - with the report on standard input" >&2
+  exit 1
+}
+
+[[ -n "$run" && -n "$report" ]] || usage
+if [[ ! "$model" =~ ^[A-Za-z0-9._-]+$ ]]; then
+  echo "The model's name or ID may hold only letters, digits, '.', '_' and '-': $model" >&2
+  exit 1
+fi
+
+if [[ "$report" == "-" ]]; then
+  text=$(cat)
+elif [[ -f "$report" ]]; then
+  text=$(cat "$report")
+else
+  usage
+fi
+
+[[ -n "$text" ]] || usage
+
+top=$(git rev-parse --show-toplevel)
+config="$top/dev/guardrails/config.sh"
+# shellcheck source=/dev/null
+[[ -f "$config" ]] && . "$config"
+app=${HEARTWOOD_APP:-heartwood}
+
+common=$(cd "$top" && cd "$(git rev-parse --git-common-dir)" && pwd)
+dir="$common/$app-architecture/$run"
+
+if [[ ! -f "$dir/packet.md" ]]; then
+  echo "Run $run has no packet ($dir/packet.md). Write one with mix heartwood.architecture." >&2
+  exit 1
+fi
+
+out="$dir/$model.md"
+if [[ -e "$out" ]]; then
+  echo "$model's report for run $run is already kept ($out); its first answer stands." >&2
+  exit 1
+fi
+
+{
+  echo "run: $run"
+  echo "model: $model"
+  echo
+  printf '%s\n' "$text"
+} >"$out"
+
+echo "$out"

@@ -99,7 +99,9 @@ defmodule Heartwood.Guardrails.Ratchet do
   @spec total(counts()) :: non_neg_integer()
   def total(counts), do: counts |> flatten() |> Map.values() |> Enum.sum()
 
-  defp flatten(counts) do
+  @doc ~S|Counts keyed by their key path: `%{"a.ex" => %{"radius" => 2}}` becomes `%{["a.ex", "radius"] => 2}`.|
+  @spec flatten(counts()) :: %{[String.t()] => pos_integer()}
+  def flatten(counts) do
     Enum.reduce(counts, %{}, fn
       {key, count}, acc when is_integer(count) ->
         Map.put(acc, [key], count)

@@ -7,7 +7,7 @@
 HEARTWOOD_APP=heartwood
 
 # Where heartwood_guardrails is, from the repository's root. An app leaves it
-# unset: deps/heartwood_guardrails.
+# unset: deps/heartwood_guardrails/guardrails.
 HEARTWOOD_HOME=guardrails
 
 # Paths a commit may touch without a reuse review: a directory ends in /,
@@ -19,3 +19,10 @@ HEARTWOOD_LIB="guardrails/lib/"
 
 # This repository's questions for the reviewer, added to the packet.
 HEARTWOOD_CHECKLIST=dev/guardrails/checklist.md
+
+# The architecture review (mix heartwood.architecture, run from guardrails/):
+# the architecture docs and this repository's questions are the defaults,
+# docs/architecture/ and dev/guardrails/architecture.md. Modules are a level
+# deeper than an app's (lib/heartwood/guardrails/<module>), so the graph
+# folds at four path segments.
+HEARTWOOD_GRAPH_DEPTH=4

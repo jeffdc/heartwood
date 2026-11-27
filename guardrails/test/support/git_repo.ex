@@ -2,7 +2,8 @@ defmodule Heartwood.Test.GitRepo do
   @moduledoc """
   A throwaway git repository laid out as an app that uses heartwood: its
   settings in `dev/guardrails/config.sh`, the shims in `dev/githooks/`, and
-  `deps/heartwood_guardrails` linked to this package. Git runs with global
+  `deps/heartwood_guardrails/guardrails` linked to this package (Mix checks
+  a `sparse:` dependency out into its folder). Git runs with global
   and system config shut out, so nothing depends on the machine or harness.
   """
 
@@ -60,8 +61,8 @@ defmodule Heartwood.Test.GitRepo do
       File.chmod!(path, 0o755)
     end
 
-    File.mkdir_p!(Path.join(dir, "deps"))
-    File.ln_s!(@package, Path.join(dir, "deps/heartwood_guardrails"))
+    File.mkdir_p!(Path.join(dir, "deps/heartwood_guardrails"))
+    File.ln_s!(@package, Path.join(dir, "deps/heartwood_guardrails/guardrails"))
     {_, 0} = cmd(dir, script("hooks/install"), [])
     dir
   end
