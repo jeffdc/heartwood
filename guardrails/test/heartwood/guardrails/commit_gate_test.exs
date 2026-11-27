@@ -155,7 +155,8 @@ defmodule Heartwood.Guardrails.CommitGateTest do
       assert head(dir) != before
     end
 
-    test "that also touches AGENTS.md or CLAUDE.md needs a review", %{tmp_dir: dir} do
+    test "that also touches AGENTS.md or CLAUDE.md outside the prose paths needs a review",
+         %{tmp_dir: dir} do
       for rules <- ["AGENTS.md", "CLAUDE.md"] do
         stage(dir, ["docs/notes.md", rules])
 
@@ -182,18 +183,24 @@ defmodule Heartwood.Guardrails.CommitGateTest do
       assert status != 0
     end
 
-    test "under a prose pattern goes through unreviewed, but AGENTS.md still needs a review",
+    test "under a prose pattern goes through unreviewed, AGENTS.md and CLAUDE.md too",
          %{tmp_dir: dir} do
-      path = Path.join(dir, "dev/guardrails/config.sh")
-      File.write!(path, File.read!(path) <> ~s(HEARTWOOD_PROSE="*.md"\n))
-      stage(dir, ["lib/deep/notes.md"])
+      settings!(dir, ~s(HEARTWOOD_PROSE="*.md"\n))
+      stage(dir, ["lib/deep/notes.md", "AGENTS.md", "CLAUDE.md"])
 
-      assert {_, 0} = git(dir, ["commit", "-q", "-m", "Notes"])
+      assert {_, 0} = git(dir, ["commit", "-q", "-m", "Notes and rules"])
+    end
 
-      stage(dir, ["lib/more.md", "AGENTS.md"])
+    test "under HEARTWOOD_CODE needs a review, whatever the prose paths say", %{tmp_dir: dir} do
+      settings!(dir, ~s(HEARTWOOD_PROSE="*.md"\nHEARTWOOD_CODE="prompts/ docs/fixtures/*"\n))
 
-      assert {_, status} = git(dir, ["commit", "-m", "Rules"])
-      assert status != 0
+      for path <- ["prompts/p.md", "docs/fixtures/page.md"] do
+        stage(dir, [path])
+
+        assert {_, status} = git(dir, ["commit", "-m", "Code read as Markdown"])
+        assert status != 0
+        git!(dir, ["reset", "-q", path])
+      end
     end
 
     test "a file that only starts like a prose directory needs a review", %{tmp_dir: dir} do

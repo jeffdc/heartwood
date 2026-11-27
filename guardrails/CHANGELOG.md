@@ -2,6 +2,14 @@
 
 Every release that changes `heartwood_guardrails`, newest first. An entry that needs something from an app has "Upgrade:" steps. Versions are heartwood's tags (`v0.y.z`, one series for every package); while it's 0.x, a minor version needs action from an app and a patch is a drop-in.
 
+## Unreleased
+
+- Changed: the commit gate no longer reviews AGENTS.md and CLAUDE.md whatever `HEARTWOOD_PROSE` says. They are prose when a prose path or pattern covers them (`*.md`, or the names themselves), like any other file; with the default (`docs/ README.md`) they are still reviewed.
+- New: `HEARTWOOD_CODE`, paths the commit gate reviews though a prose path or pattern covers them, for the Markdown an app's code or tests read. CI counts them as code too. With it, `HEARTWOOD_PROSE="*.md"` lets doc-only commits anywhere through unreviewed while the Markdown that code reads is still reviewed and tested. `hooks/prose.sh` has `heartwood_counts_as_prose PROSE CODE FILE` for both.
+- Docs: the README's examples pin this tag; "mix.lock and HEARTWOOD_PATH" shows how to skip `mix deps.unlock --check-unused` while `HEARTWOOD_PATH` is set; the v0.1.0 upgrade step's install path is corrected.
+
+Upgrade (optional; nothing changes for an app that doesn't list AGENTS.md or CLAUDE.md under a prose path): move `@heartwood_tag` and the `actions/changes` pin to the new tag. For doc-only commits to need no review, set `HEARTWOOD_PROSE="docs/ *.md"` (with anything else that's prose), and list in `HEARTWOOD_CODE` the Markdown that the app's code or tests read; it can then drop those paths from `HEARTWOOD_CI_PROSE` and `HEARTWOOD_CI_CODE`.
+
 ## v0.2.2 (2026-11-27)
 
 - New: patterns in the prose settings. An entry in `HEARTWOOD_PROSE`, `HEARTWOOD_CI_PROSE` or `HEARTWOOD_CI_ALL` may be a pattern (`*`, `?` and `[...]`), where `*` matches across `/`: `HEARTWOOD_CI_PROSE="*.md"` makes every Markdown file prose to CI, new ones included, without listing each. Entries without those characters match as before.
@@ -43,4 +51,4 @@ Upgrade: follow "Using it in an app" in the [README](README.md). For an app with
 - Its conformance module becomes a `Patterns` ratchet: the rules move into `rules/0`, with each rule's files (gallformers: its templates for every rule, its stylesheets for `hex_color` and `letter_case`, `tokens.css` exempt) and the hex-colour check as a `:filter`. The baseline file carries over unchanged.
 - `mix gallformers.design_system.baseline` and `mix gallformers.guardrails.baseline` become `mix heartwood.baseline <ratchet>`.
 - Retirement entries use `why:` in place of `matter:`.
-- `dev/githooks/pre-commit` and `pre-push` become copies of `hooks/app-shim`; `dev/guardrails/config.sh` holds the settings (gallformers: `HEARTWOOD_APP=gallformers`, `HEARTWOOD_PROSE="docs/ runbooks/ README.md"`); `dev/guardrails/reviewer.md`'s gallformers questions and places to look move to the checklist. Run `deps/heartwood_guardrails/hooks/install` again: it replaces the old wrappers.
+- `dev/githooks/pre-commit` and `pre-push` become copies of `hooks/app-shim`; `dev/guardrails/config.sh` holds the settings (gallformers: `HEARTWOOD_APP=gallformers`, `HEARTWOOD_PROSE="docs/ runbooks/ README.md"`); `dev/guardrails/reviewer.md`'s gallformers questions and places to look move to the checklist. Run `deps/heartwood_guardrails/guardrails/hooks/install` again (the path from v0.1.1 on; this entry said `deps/heartwood_guardrails/hooks/install`): it replaces the old wrappers.

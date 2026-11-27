@@ -17,7 +17,7 @@ The checks Oak Compendium and Gallformers hold their code to, with each app's ow
 In `mix.exs`, pinned by tag, with a local checkout when `HEARTWOOD_PATH` is set (for working on heartwood from the app; see [mix.lock](#mixlock-and-heartwood_path)):
 
 ```elixir
-@heartwood_tag "v0.2.1"
+@heartwood_tag "v0.2.3"
 
 defp deps do
   [
@@ -115,10 +115,11 @@ Baselines are written by `mix heartwood.baseline MyAppWeb.Conformance` (or with 
    | Setting | Meaning | Default |
    |---|---|---|
    | `HEARTWOOD_APP` | Names the review folder (`<git dir>/<app>-review`) and the push guard's override (`<APP>_PUSH_MAIN=1`) | required |
-   | `HEARTWOOD_PROSE` | Paths a commit may touch without a review: a directory ends in `/`, anything else is one file or a pattern (`*`, `?` and `[...]`, as in bash's `[[ == ]]`, where `*` matches across `/`, so `*.md` is every Markdown file). AGENTS.md and CLAUDE.md are always reviewed. | `docs/ README.md` |
+   | `HEARTWOOD_PROSE` | Paths a commit may touch without a review: a directory ends in `/`, anything else is one file or a pattern (`*`, `?` and `[...]`, as in bash's `[[ == ]]`, where `*` matches across `/`, so `*.md` is every Markdown file). CI skips for them too. | `docs/ README.md` |
+   | `HEARTWOOD_CODE` | Paths that need a review though a prose path or pattern covers them, and are code to CI too: files the app's code or tests read, as `prompts/` under `*.md`; matched like `HEARTWOOD_PROSE` | none |
    | `HEARTWOOD_LIB` | Where a new file needs the reviewer's justification | `lib/` |
-   | `HEARTWOOD_CI_PROSE` | Files that are prose to CI (`bin/changes`) though the commit gate still reviews them, as `AGENTS.md`, or `*.md` for every Markdown file; matched like `HEARTWOOD_PROSE` | none |
-   | `HEARTWOOD_CI_CODE` | Paths that are code to CI though a prose path or pattern covers them: files the app's code or tests read, as `prompts/` under `*.md`; matched like `HEARTWOOD_PROSE` | none |
+   | `HEARTWOOD_CI_PROSE` | Files that are prose to CI (`bin/changes`) though the commit gate still reviews them, as `CODING_STANDARDS.md`, or `*.md` for every Markdown file; matched like `HEARTWOOD_PROSE` | none |
+   | `HEARTWOOD_CI_CODE` | Paths that are code to CI, though not to the commit gate, when a prose path or pattern covers them; matched like `HEARTWOOD_PROSE` | none |
    | `HEARTWOOD_CI_AREAS` | The areas `bin/changes` splits a change's code into, each `name=path/`; a path outside every area touches them all | none |
    | `HEARTWOOD_CI_ALL` | Paths that touch every area when they change (matched like `HEARTWOOD_PROSE`): files that decide what CI runs, so a change to them runs everything | none |
    | `HEARTWOOD_CHECKLIST` | The app's own questions for the reviewer, and where to look for existing code | `dev/guardrails/checklist.md` |
@@ -132,7 +133,7 @@ Baselines are written by `mix heartwood.baseline MyAppWeb.Conformance` (or with 
 
 ### CI: skipping what a change doesn't touch
 
-A pull request that changes only prose needn't run the app's tests. [`actions/changes`](actions/changes/action.yml) runs [`bin/changes`](bin/changes) on the pull request's changed paths and says whether any are code: not in `HEARTWOOD_PROSE` (the commit gate's prose, matched by `hooks/prose.sh`, a move counted by both its paths) or `HEARTWOOD_CI_PROSE`. With `HEARTWOOD_CI_AREAS` it also says which areas the code touches. Anything but a pull request (a push, a schedule) counts as changing everything.
+A pull request that changes only prose needn't run the app's tests. [`actions/changes`](actions/changes/action.yml) runs [`bin/changes`](bin/changes) on the pull request's changed paths and says whether any are code: not in `HEARTWOOD_PROSE` (the commit gate's prose, matched by `hooks/prose.sh`, a move counted by both its paths) or `HEARTWOOD_CI_PROSE`, or in `HEARTWOOD_CODE` or `HEARTWOOD_CI_CODE`. With `HEARTWOOD_CI_AREAS` it also says which areas the code touches. Anything but a pull request (a push, a schedule) counts as changing everything.
 
 A first job runs it, and every job that only needs to run for code depends on it:
 
@@ -148,7 +149,7 @@ jobs:
         with:
           fetch-depth: 0
       - id: changes
-        uses: jeffdc/heartwood/guardrails/actions/changes@v0.2.1
+        uses: jeffdc/heartwood/guardrails/actions/changes@v0.2.3
 
   test:
     needs: changes
@@ -157,13 +158,25 @@ jobs:
 
 A job skipped by its `if:` satisfies a required check, so the condition also runs the job when the `changes` job fails: otherwise a broken classifier would let a pull request merge with nothing run. With areas, a job tests `fromJSON(needs.changes.outputs.areas).<name>` instead of `code`. A name that isn't in `HEARTWOOD_CI_AREAS` would come out empty and skip its jobs on every pull request, so pass the names the workflow reads to the action (`with: expect: "api web"`): it fails, and every job runs, when one is missing. Pin the action to the same tag as the dependency in `mix.exs`, and move both together.
 
-What CI skips for is the commit gate's prose plus `HEARTWOOD_CI_PROSE`, less `HEARTWOOD_CI_CODE`. `HEARTWOOD_CI_PROSE="*.md"` skips for every Markdown file, wherever it is, new ones included; then list in `HEARTWOOD_CI_CODE` the Markdown that the app's code or tests read (prompts, imported content, fixtures), or a change to it alone will skip the tests.
+What CI skips for is the commit gate's prose plus `HEARTWOOD_CI_PROSE`, less `HEARTWOOD_CODE` and `HEARTWOOD_CI_CODE`. `HEARTWOOD_PROSE="*.md"` lets a commit to any Markdown file, wherever it is, new ones included, through unreviewed and skips CI for it; then list in `HEARTWOOD_CODE` the Markdown that the app's code or tests read (prompts, imported content, fixtures), or a change to it alone will go unreviewed and skip the tests. To skip CI for Markdown that the gate still reviews, put the pattern in `HEARTWOOD_CI_PROSE` instead.
 
 `bin/changes BASE HEAD` prints `code=true|false` and `areas={"<name>":true|false,...}`; with no arguments it reads paths from standard input, and `--all` prints everything true. `--expect "name ..."`, first, names the areas that must exist. A change to `dev/guardrails/config.sh` itself touches everything, whatever it now says. It fails, and so the jobs all run, without `dev/guardrails/config.sh`, on an unknown commit, on an area whose path doesn't end in `/`, or on an expected area that isn't set.
 
 ### mix.lock and HEARTWOOD_PATH
 
 A `path:` dependency isn't locked, so with `HEARTWOOD_PATH` set, `mix deps.unlock --unused` (in `precommit`) drops heartwood's entries from `mix.lock`. The commit gate blocks a staged `mix.lock` without them, whatever the review says: unset `HEARTWOOD_PATH`, run `mix deps.get`, and restage it.
+
+With `mix deps.unlock --check-unused` in `precommit` instead, heartwood's entries are unused whenever `HEARTWOOD_PATH` is set, so the check fails. Skip it then, in the alias:
+
+```elixir
+precommit: [
+  # …
+  fn _ -> if System.get_env("HEARTWOOD_PATH") in [nil, ""], do: Mix.Task.run("deps.unlock", ["--check-unused"]) end,
+  # …
+]
+```
+
+It still runs in CI and with `HEARTWOOD_PATH` unset, so the lock is checked before it's pushed.
 
 ### check-toolchain
 
