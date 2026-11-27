@@ -2,7 +2,7 @@
 
 Every release that changes `heartwood_ui`, newest first. An entry that needs something from an app has "Upgrade:" steps. Versions are heartwood's tags (`v0.y.z`, one series for every package); while it's 0.x, a minor version needs action from an app and a patch is a drop-in.
 
-## Unreleased (v0.2.0)
+## v0.2.0 (2026-11-27)
 
 The first release: the photo viewer, `Heartwood.UI.PhotoViewer.photo_viewer/1`, from Oak Compendium's `OaksWeb.PhotoViewer` (itself a fork of Gallformers' `photo_viewer/1`), unified for both apps and redesigned with Jeff (2026-11-27). Its hook and CSS are LiveView colocated assets.
 
