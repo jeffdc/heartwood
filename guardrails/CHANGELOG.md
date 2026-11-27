@@ -2,7 +2,7 @@
 
 Every release that changes `heartwood_guardrails`, newest first. An entry that needs something from an app has "Upgrade:" steps. Versions are heartwood's tags (`v0.y.z`, one series for every package); while it's 0.x, a minor version needs action from an app and a patch is a drop-in.
 
-## Unreleased
+## v0.2.2 (2026-11-27)
 
 - New: patterns in the prose settings. An entry in `HEARTWOOD_PROSE`, `HEARTWOOD_CI_PROSE` or `HEARTWOOD_CI_ALL` may be a pattern (`*`, `?` and `[...]`), where `*` matches across `/`: `HEARTWOOD_CI_PROSE="*.md"` makes every Markdown file prose to CI, new ones included, without listing each. Entries without those characters match as before.
 - New: `HEARTWOOD_CI_CODE`, paths that are code to CI though a prose path or pattern covers them, for the Markdown an app's code or tests read (prompts, imported content, fixtures). It takes paths out of the commit gate's prose for CI too, so a fixture under `docs/` no longer has to move.
