@@ -1,0 +1,33 @@
+name: Changes
+description: >
+  Which parts of a pull request's change are code (heartwood_guardrails'
+  bin/changes, with the repository's dev/guardrails/config.sh), so CI can
+  skip the jobs a change doesn't need. Anything but a pull request counts
+  as changing everything. Check the repository out with its history
+  (fetch-depth: 0) first.
+
+outputs:
+  code:
+    description: "'true' when anything but prose changed"
+    value: ${{ steps.changes.outputs.code }}
+  areas:
+    description: "JSON: each area in HEARTWOOD_CI_AREAS, true when the change touches it"
+    value: ${{ steps.changes.outputs.areas }}
+
+runs:
+  using: composite
+  steps:
+    - id: changes
+      name: Find what the change touches
+      shell: bash
+      env:
+        EVENT: ${{ github.event_name }}
+        BASE: ${{ github.event.pull_request.base.sha }}
+        HEAD: ${{ github.event.pull_request.head.sha }}
+      run: |
+        changes="$GITHUB_ACTION_PATH/../../bin/changes"
+        if [ "$EVENT" = "pull_request" ]; then
+          "$changes" "$BASE" "$HEAD" | tee -a "$GITHUB_OUTPUT"
+        else
+          "$changes" --all | tee -a "$GITHUB_OUTPUT"
+        fi

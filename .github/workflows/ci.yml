@@ -20,28 +20,28 @@ permissions:
   contents: read
 
 jobs:
-  # Which packages the change touches (.github/actions/changes): a pull
-  # request that changes only prose skips the jobs below, and a skipped job
-  # still satisfies a required check. If this job fails, they all run: a job
+  # Which packages the change touches (guardrails/actions/changes, with
+  # HEARTWOOD_CI_AREAS from dev/guardrails/config.sh): a pull request that
+  # changes only prose skips the jobs below, and a skipped job still
+  # satisfies a required check. If this job fails, they all run: a job
   # skipped for a failure would satisfy its required check too.
   changes:
     name: CI changes
     runs-on: ubuntu-latest
     outputs:
-      guardrails: ${{ steps.changes.outputs.guardrails }}
-      ui: ${{ steps.changes.outputs.ui }}
+      areas: ${{ steps.changes.outputs.areas }}
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - id: changes
-        uses: ./.github/actions/changes
+        uses: ./guardrails/actions/changes
 
   guardrails:
     name: heartwood_guardrails
     needs: changes
-    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.guardrails == 'true') }}
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || fromJSON(needs.changes.outputs.areas).guardrails) }}
     runs-on: ubuntu-latest
 
     defaults:
@@ -79,7 +79,7 @@ jobs:
   dialyzer:
     name: Dialyzer
     needs: changes
-    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.guardrails == 'true') }}
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || fromJSON(needs.changes.outputs.areas).guardrails) }}
     runs-on: ubuntu-latest
 
     defaults:
@@ -118,7 +118,7 @@ jobs:
   ui:
     name: heartwood_ui
     needs: changes
-    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.ui == 'true') }}
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || fromJSON(needs.changes.outputs.areas).ui) }}
     runs-on: ubuntu-latest
 
     defaults:
@@ -154,7 +154,7 @@ jobs:
   ui-dialyzer:
     name: heartwood_ui Dialyzer
     needs: changes
-    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.ui == 'true') }}
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || fromJSON(needs.changes.outputs.areas).ui) }}
     runs-on: ubuntu-latest
 
     defaults:
@@ -196,7 +196,7 @@ jobs:
   ui-browser:
     name: heartwood_ui browser tests
     needs: changes
-    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.ui == 'true') }}
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || fromJSON(needs.changes.outputs.areas).ui) }}
     runs-on: ubuntu-latest
 
     defaults:

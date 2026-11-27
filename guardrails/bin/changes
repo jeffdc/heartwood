@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+# Which parts of a change are code, so CI can skip the jobs a change doesn't
+# need. Run from the repository; settings come from dev/guardrails/config.sh.
+#
+#   changes BASE HEAD   the paths changed between the commits (BASE...HEAD)
+#   changes             one path per line on stdin
+#   changes --all       everything, for a push or a scheduled run
+#
+# Prints the lines GITHUB_OUTPUT takes:
+#
+#   code=true|false                  whether anything but prose changed
+#   areas={"name":true|false, ...}   per area in HEARTWOOD_CI_AREAS
+#
+# Prose touches nothing: the commit gate's (HEARTWOOD_PROSE, matched by
+# hooks/prose.sh, a move counted by both its paths) and HEARTWOOD_CI_PROSE,
+# files the gate still reviews but no code reads (AGENTS.md, say), matched
+# the same way. HEARTWOOD_CI_AREAS ("name=path/ ...") splits the code: a
+# path under an area's path touches that area, and a path under none touches
+# every area.
+set -euo pipefail
+
+src=$(cd "$(dirname "$0")/.." && pwd)
+# shellcheck source-path=SCRIPTDIR source=../hooks/prose.sh
+. "$src/hooks/prose.sh"
+
+top=$(git rev-parse --show-toplevel)
+config="$top/dev/guardrails/config.sh"
+if [[ ! -f "$config" ]]; then
+  echo "dev/guardrails/config.sh is missing; it holds this repository's guardrail settings." >&2
+  exit 1
+fi
+# shellcheck source=/dev/null
+. "$config"
+prose="${HEARTWOOD_PROSE:-docs/ README.md} ${HEARTWOOD_CI_PROSE:-}"
+read -ra areas <<<"${HEARTWOOD_CI_AREAS:-}"
+# An area's path ends in /, so ui=ui/ can't also claim uikit/.
+for area in "${areas[@]}"; do
+  if [[ "$area" != *=*/ ]]; then
+    echo "HEARTWOOD_CI_AREAS: \"$area\" isn't name=path/ (the path ends in /)." >&2
+    exit 1
+  fi
+done
+
+# touched[i] is areas[i]'s answer (indexed arrays: macOS's bash is 3.2).
+touched=()
+for i in "${!areas[@]}"; do touched[i]=false; done
+code=false
+
+touch_all() {
+  local i
+  code=true
+  for i in "${!areas[@]}"; do touched[i]=true; done
+}
+
+classify() {
+  local path i hit
+  while IFS= read -r path || [[ -n "$path" ]]; do
+    [[ -z "$path" ]] && continue
+    heartwood_is_prose "$prose" "$path" && continue
+    code=true
+    hit=false
+    for i in "${!areas[@]}"; do
+      if [[ "$path" == "${areas[i]#*=}"* ]]; then
+        touched[i]=true
+        hit=true
+      fi
+    done
+    if [[ $hit == false ]]; then touch_all; fi
+  done
+}
+
+case $# in
+  0) classify ;;
+  1)
+    [[ $1 == --all ]] || { echo "usage: changes [BASE HEAD | --all]" >&2; exit 2; }
+    touch_all
+    ;;
+  2)
+    # Listed first, so a failure (an unknown commit) stops the script and CI
+    # runs everything; read through a pipe, it would pass for "no change".
+    files=$(cd "$top" && heartwood_changed_files "$1...$2")
+    classify <<<"$files"
+    ;;
+  *) echo "usage: changes [BASE HEAD | --all]" >&2; exit 2 ;;
+esac
+
+json=""
+for i in "${!areas[@]}"; do
+  json+="${json:+,}\"${areas[i]%%=*}\":${touched[i]}"
+done
+
+echo "code=$code"
+echo "areas={$json}"

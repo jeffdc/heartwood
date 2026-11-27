@@ -2,6 +2,13 @@
 
 Every release that changes `heartwood_guardrails`, newest first. An entry that needs something from an app has "Upgrade:" steps. Versions are heartwood's tags (`v0.y.z`, one series for every package); while it's 0.x, a minor version needs action from an app and a patch is a drop-in.
 
+## v0.2.1 (2026-11-27)
+
+- New: skipping the CI jobs a pull request doesn't need. `bin/changes` sorts a change's paths into prose and code, and the code into areas, with two new settings: `HEARTWOOD_CI_PROSE` (files that are prose to CI though the commit gate still reviews them) and `HEARTWOOD_CI_AREAS`. `actions/changes` runs it in a workflow. The README's "CI: skipping what a change doesn't touch" shows how.
+- What counts as prose, and how a change's files are listed, is now `hooks/prose.sh`, which the commit gate and `bin/changes` both use. The commit gate behaves as before.
+
+Upgrade (optional; nothing changes until an app adopts it): move `@heartwood_tag` to `v0.2.1`. To skip CI on prose-only pull requests, add the `changes` job and the conditions from the README to each workflow that tests code, with `HEARTWOOD_CI_PROSE` in `dev/guardrails/config.sh` for anything else that is prose to CI.
+
 ## v0.1.1 (2026-11-26)
 
 - Fixed: the package's path in an app. Mix checks a `sparse:` dependency out into its folder, so the package is at `deps/heartwood_guardrails/guardrails`, but `hooks/app-shim`'s default `HEARTWOOD_HOME` and the README said `deps/heartwood_guardrails`. The default and the README now say where it is, and the tests lay an app out as Mix does.

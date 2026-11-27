@@ -14,6 +14,13 @@ HEARTWOOD_HOME=guardrails
 # anything else is one file. AGENTS.md and CLAUDE.md are always reviewed.
 HEARTWOOD_PROSE="docs/ README.md guardrails/README.md guardrails/CHANGELOG.md ui/README.md ui/CHANGELOG.md"
 
+# CI (guardrails/bin/changes, guardrails/actions/changes): files that are
+# prose to CI though the commit gate still reviews them, and the areas a
+# change's code is split into, each a "name=path/". A path outside every
+# area touches them all.
+HEARTWOOD_CI_PROSE="AGENTS.md CLAUDE.md PRODUCT.md"
+HEARTWOOD_CI_AREAS="guardrails=guardrails/ ui=ui/"
+
 # Where a new file needs the reviewer's justification.
 HEARTWOOD_LIB="guardrails/lib/ ui/lib/"
 
