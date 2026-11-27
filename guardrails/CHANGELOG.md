@@ -2,6 +2,17 @@
 
 Every release that changes `heartwood_guardrails`, newest first. An entry that needs something from an app has "Upgrade:" steps. Versions are heartwood's tags (`v0.y.z`, one series for every package); while it's 0.x, a minor version needs action from an app and a patch is a drop-in.
 
+## v0.1.1 (2026-11-26)
+
+- Fixed: the package's path in an app. Mix checks a `sparse:` dependency out into its folder, so the package is at `deps/heartwood_guardrails/guardrails`, but `hooks/app-shim`'s default `HEARTWOOD_HOME` and the README said `deps/heartwood_guardrails`. The default and the README now say where it is, and the tests lay an app out as Mix does.
+- New: the architecture review, a periodic review of the whole repository by several models. `mix heartwood.architecture` writes its packet (`Heartwood.Guardrails.Architecture`), `review/architect.md` holds the reviewer's instructions, and `bin/record-architecture` keeps each model's report, in `<git common dir>/<app>-architecture/<run>/`. Its settings, in `dev/guardrails/config.sh`, have defaults: `HEARTWOOD_ARCHITECTURE` (`docs/architecture/`), `HEARTWOOD_ARCHITECTURE_QUESTIONS` (`dev/guardrails/architecture.md`) and `HEARTWOOD_GRAPH_DEPTH` (`3`).
+- `Mix.Tasks.Heartwood.Status.lines/0` returns the report `mix heartwood.status` prints, and `Heartwood.Guardrails.Ratchet.flatten/1` keys counts by their key path; the architecture review uses both.
+
+Upgrade (optional; v0.1.0's setup keeps working):
+
+- Copy `hooks/app-shim` to `dev/githooks/pre-commit` and `pre-push` again; then `HEARTWOOD_HOME` can be dropped from `dev/guardrails/config.sh` if it was set only to work around the old default.
+- For the architecture review: add `"heartwood.architecture": :test` to `preferred_envs` in `cli/0`, list the ratchets in `config :heartwood_guardrails, ratchets: [...]` (in `config/test.exs`) so the packet shows them, and write the app's questions for the reviewer in `dev/guardrails/architecture.md`.
+
 ## v0.1.0 (2026-11-26)
 
 The first release: gallformers' guardrails (taxogall, 2026-11-26), with what was specific to gallformers made into settings.

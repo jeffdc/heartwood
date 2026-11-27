@@ -17,13 +17,11 @@ defmodule Mix.Tasks.Heartwood.Status do
   alias Mix.Dep.Lock
 
   @impl Mix.Task
-  def run(_args) do
-    deps = Mix.Project.config()[:deps] || []
+  def run(_args), do: Enum.each(lines(), fn line -> Mix.shell().info(line) end)
 
-    deps
-    |> report(Lock.read(), &latest_tag/1)
-    |> Enum.each(fn line -> Mix.shell().info(line) end)
-  end
+  @doc "The report for the current project: one line per heartwood package."
+  @spec lines() :: [String.t()]
+  def lines, do: report(Mix.Project.config()[:deps] || [], Lock.read(), &latest_tag/1)
 
   @doc """
   One line per heartwood package in `deps`, from its `mix.lock` entry and

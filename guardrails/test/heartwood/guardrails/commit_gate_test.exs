@@ -20,7 +20,7 @@ defmodule Heartwood.Guardrails.CommitGateTest do
 
   # Through deps/, as the app runs it.
   defp packet(dir),
-    do: cmd(dir, Path.join(dir, "deps/heartwood_guardrails/bin/review-packet"), [])
+    do: cmd(dir, Path.join(dir, "deps/heartwood_guardrails/guardrails/bin/review-packet"), [])
 
   defp review(dir, verdict) do
     {packet, 0} = packet(dir)
@@ -93,7 +93,7 @@ defmodule Heartwood.Guardrails.CommitGateTest do
     end
 
     test "without heartwood in deps/ is blocked: the shim fails closed", %{tmp_dir: dir} do
-      File.rm!(Path.join(dir, "deps/heartwood_guardrails"))
+      File.rm!(Path.join(dir, "deps/heartwood_guardrails/guardrails"))
 
       {out, status} = git(dir, ["commit", "-m", "Add new_fun"])
 
@@ -102,7 +102,7 @@ defmodule Heartwood.Guardrails.CommitGateTest do
     end
 
     test "with HEARTWOOD_PATH runs the local checkout's gate", %{tmp_dir: dir} do
-      File.rm!(Path.join(dir, "deps/heartwood_guardrails"))
+      File.rm!(Path.join(dir, "deps/heartwood_guardrails/guardrails"))
       checkout = package() |> Path.dirname()
 
       {out, status} = git(dir, ["commit", "-m", "Add new_fun"], [{"HEARTWOOD_PATH", checkout}])
@@ -243,7 +243,7 @@ defmodule Heartwood.Guardrails.CommitGateTest do
       assert packet =~ "## Instructions"
       assert packet =~ "### Your questions, in order"
       assert packet =~ "Is the change in the plan?"
-      assert packet =~ "deps/heartwood_guardrails/bin/record-review pass|block -"
+      assert packet =~ "deps/heartwood_guardrails/guardrails/bin/record-review pass|block -"
       assert packet =~ "```\n## Findings\n"
       assert packet =~ "a.ex: def new_fun(x), do: x"
       assert packet =~ "tree: "

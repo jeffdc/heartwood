@@ -78,7 +78,7 @@ defmodule Heartwood.Guardrails.PrePushTest do
       dir: dir,
       remote: remote
     } do
-      File.rm!(Path.join(dir, "deps/heartwood_guardrails"))
+      File.rm!(Path.join(dir, "deps/heartwood_guardrails/guardrails"))
 
       {out, status} = git(dir, ["push", "-q", "origin", "main"])
 
