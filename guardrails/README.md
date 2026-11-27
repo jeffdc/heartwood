@@ -17,7 +17,7 @@ The checks Oak Compendium and Gallformers hold their code to, with each app's ow
 In `mix.exs`, pinned by tag, with a local checkout when `HEARTWOOD_PATH` is set (for working on heartwood from the app; see [mix.lock](#mixlock-and-heartwood_path)):
 
 ```elixir
-@heartwood_tag "v0.1.1"
+@heartwood_tag "v0.2.1"
 
 defp deps do
   [
@@ -117,6 +117,9 @@ Baselines are written by `mix heartwood.baseline MyAppWeb.Conformance` (or with 
    | `HEARTWOOD_APP` | Names the review folder (`<git dir>/<app>-review`) and the push guard's override (`<APP>_PUSH_MAIN=1`) | required |
    | `HEARTWOOD_PROSE` | Paths a commit may touch without a review: a directory ends in `/`, anything else is one file. AGENTS.md and CLAUDE.md are always reviewed. | `docs/ README.md` |
    | `HEARTWOOD_LIB` | Where a new file needs the reviewer's justification | `lib/` |
+   | `HEARTWOOD_CI_PROSE` | Files that are prose to CI (`bin/changes`) though the commit gate still reviews them, as `AGENTS.md`; matched like `HEARTWOOD_PROSE` | none |
+   | `HEARTWOOD_CI_AREAS` | The areas `bin/changes` splits a change's code into, each `name=path/`; a path outside every area touches them all | none |
+   | `HEARTWOOD_CI_ALL` | Paths that touch every area when they change (matched like `HEARTWOOD_PROSE`): files that decide what CI runs, so a change to them runs everything | none |
    | `HEARTWOOD_CHECKLIST` | The app's own questions for the reviewer, and where to look for existing code | `dev/guardrails/checklist.md` |
    | `HEARTWOOD_HOME` | Where the package is, from the root | `deps/heartwood_guardrails/guardrails` |
    | `HEARTWOOD_ARCHITECTURE` | The architecture docs, for the architecture review | `docs/architecture/` |
@@ -125,6 +128,37 @@ Baselines are written by `mix heartwood.baseline MyAppWeb.Conformance` (or with 
 
 3. Install with `deps/heartwood_guardrails/guardrails/hooks/install` (the app's `make hooks`). It puts a wrapper in git's hooks directory that runs the checkout's `dev/githooks/<hook>`, so each branch runs its own version, and keeps a copy of the push guard that holds on a branch without it. It replaces wrappers from before heartwood (`# <app>: runs <dir>/githooks/<hook>`) and leaves any other hook alone.
 4. The routine, in the app's AGENTS.md: stage by name, run `deps/heartwood_guardrails/guardrails/bin/review-packet`, have a reviewer with fresh context follow the packet it prints (heartwood's instructions in [`review/reviewer.md`](review/reviewer.md), then the app's checklist), and commit once the reviewer has recorded a pass with `bin/record-review`.
+
+### CI: skipping what a change doesn't touch
+
+A pull request that changes only prose needn't run the app's tests. [`actions/changes`](actions/changes/action.yml) runs [`bin/changes`](bin/changes) on the pull request's changed paths and says whether any are code: not in `HEARTWOOD_PROSE` (the commit gate's prose, matched by `hooks/prose.sh`, a move counted by both its paths) or `HEARTWOOD_CI_PROSE`. With `HEARTWOOD_CI_AREAS` it also says which areas the code touches. Anything but a pull request (a push, a schedule) counts as changing everything.
+
+A first job runs it, and every job that only needs to run for code depends on it:
+
+```yaml
+jobs:
+  changes:
+    name: CI changes
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.changes.outputs.code }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: changes
+        uses: jeffdc/heartwood/guardrails/actions/changes@v0.2.1
+
+  test:
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.code == 'true') }}
+```
+
+A job skipped by its `if:` satisfies a required check, so the condition also runs the job when the `changes` job fails: otherwise a broken classifier would let a pull request merge with nothing run. With areas, a job tests `fromJSON(needs.changes.outputs.areas).<name>` instead of `code`. A name that isn't in `HEARTWOOD_CI_AREAS` would come out empty and skip its jobs on every pull request, so pass the names the workflow reads to the action (`with: expect: "api web"`): it fails, and every job runs, when one is missing. Pin the action to the same tag as the dependency in `mix.exs`, and move both together.
+
+What CI skips for is the commit gate's prose plus `HEARTWOOD_CI_PROSE`: a path can be added for CI, not taken out. If the app's code or tests read a file under a prose path (a fixture in `docs/`, say), move it out of the prose path, or a change to it alone will skip the tests.
+
+`bin/changes BASE HEAD` prints `code=true|false` and `areas={"<name>":true|false,...}`; with no arguments it reads paths from standard input, and `--all` prints everything true. `--expect "name ..."`, first, names the areas that must exist. A change to `dev/guardrails/config.sh` itself touches everything, whatever it now says. It fails, and so the jobs all run, without `dev/guardrails/config.sh`, on an unknown commit, on an area whose path doesn't end in `/`, or on an expected area that isn't set.
 
 ### mix.lock and HEARTWOOD_PATH
 
@@ -154,4 +188,4 @@ A change to any of these gets an entry in [CHANGELOG.md](CHANGELOG.md), with "Up
 - The public functions of `Ratchet`, `Patterns` (what `use` adds), `DuplicateCode`, `Retirements`, `Assertions` and `Architecture`, and their failure messages' instructions.
 - The application config keys: `:ratchets`, `:duplicate_code_baseline`, `:retirements`, and their defaults.
 - The mix tasks' names, arguments and output.
-- The settings in `dev/guardrails/config.sh` and their defaults; `hooks/app-shim`, `hooks/install`, `hooks/pre-commit` and `hooks/pre-push`'s behaviour; `bin/review-packet`, `bin/record-review`, `bin/record-architecture` and `bin/check-toolchain`'s arguments, environment, output and what they check; the review folders' names (`<app>-review`, `<app>-architecture`) and the files in them; the packets' sections; the report shapes in `review/reviewer.md` and `review/architect.md`.
+- The settings in `dev/guardrails/config.sh` and their defaults; `hooks/app-shim`, `hooks/install`, `hooks/pre-commit` and `hooks/pre-push`'s behaviour; `bin/review-packet`, `bin/record-review`, `bin/record-architecture`, `bin/check-toolchain` and `bin/changes`' arguments, environment, output and what they check; `actions/changes`' input and outputs; the review folders' names (`<app>-review`, `<app>-architecture`) and the files in them; the packets' sections; the report shapes in `review/reviewer.md` and `review/architect.md`.

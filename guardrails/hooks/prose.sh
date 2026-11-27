@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # What counts as prose, shared by the commit gate (hooks/pre-commit) and
-# heartwood's CI (.github/actions/changes). Sourced, not run: it defines two
+# CI (bin/changes, run by actions/changes). Sourced, not run: it defines two
 # functions and changes nothing else.
 #
 # heartwood_changed_files [git diff args...]: the paths a change touches.
