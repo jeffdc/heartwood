@@ -2,7 +2,7 @@
 
 Every release that changes `heartwood_guardrails`, newest first. An entry that needs something from an app has "Upgrade:" steps. Versions are heartwood's tags (`v0.y.z`, one series for every package); while it's 0.x, a minor version needs action from an app and a patch is a drop-in.
 
-## Unreleased
+## v0.2.3 (2026-11-27)
 
 - Changed: the commit gate no longer reviews AGENTS.md and CLAUDE.md whatever `HEARTWOOD_PROSE` says. They are prose when a prose path or pattern covers them (`*.md`, or the names themselves), like any other file; with the default (`docs/ README.md`) they are still reviewed.
 - New: `HEARTWOOD_CODE`, paths the commit gate reviews though a prose path or pattern covers them, for the Markdown an app's code or tests read. CI counts them as code too. With it, `HEARTWOOD_PROSE="*.md"` lets doc-only commits anywhere through unreviewed while the Markdown that code reads is still reviewed and tested. `hooks/prose.sh` has `heartwood_counts_as_prose PROSE CODE FILE` for both.
