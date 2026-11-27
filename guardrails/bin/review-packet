@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+# The reuse review's packet: the staged change, for a reviewer with fresh
+# context to read before a commit (the routine is "Before you commit" in the
+# repository's AGENTS.md).
+#
+# Writes <git dir>/<app>-review/packet.md and prints its path. The packet
+# holds everything the reviewer needs: heartwood's instructions
+# (review/reviewer.md), the repository's own checklist (HEARTWOOD_CHECKLIST),
+# how to record the verdict, the staged tree's hash, the files, the new files
+# under HEARTWOOD_LIB (each needs the reviewer's justification), the new
+# public definitions (pulled from the diff, so they don't depend on the
+# author's account) and the full staged diff.
+set -euo pipefail
+
+src=$(cd "$(dirname "$0")/.." && pwd)
+top=$(git rev-parse --show-toplevel)
+cd "$top"
+
+config="dev/guardrails/config.sh"
+if [[ ! -f "$config" ]]; then
+  echo "$config is missing; it holds this repository's guardrail settings." >&2
+  exit 1
+fi
+# shellcheck source=/dev/null
+. "$config"
+app=${HEARTWOOD_APP:-heartwood}
+lib=${HEARTWOOD_LIB:-lib/}
+checklist=${HEARTWOOD_CHECKLIST:-dev/guardrails/checklist.md}
+
+git_dir=$(cd "$(git rev-parse --git-dir)" && pwd)
+dir="$git_dir/$app-review"
+mkdir -p "$dir"
+packet="$dir/packet.md"
+
+if git diff --cached --quiet; then
+  echo "Nothing is staged." >&2
+  exit 1
+fi
+
+tree=$(git write-tree)
+record="${src#"$top"/}/bin/record-review"
+lib_specs=()
+for path in $lib; do lib_specs+=(":(top)$path"); done
+
+{
+  echo "# Reuse review packet"
+  echo
+  echo "tree: $tree"
+  echo
+  echo "## Instructions"
+  echo
+  # Its title dropped, and its sections one level down, under this one;
+  # the report's shape, in a code block, stays as it is.
+  awk 'NR == 1 { next } /^```/ { fenced = !fenced } !fenced && /^## / { $0 = "#" $0 } { print }' \
+    "$src/review/reviewer.md"
+  echo
+  echo "## This repository's checklist"
+  echo
+  if [[ -f "$checklist" ]]; then cat "$checklist"; else echo "None."; fi
+  echo
+  echo "## Recording your verdict"
+  echo
+  echo "Run, from the repository, with your report on standard input:"
+  echo
+  echo "    $record pass|block - <<'REPORT'"
+  echo "    ## Findings"
+  echo "    …"
+  echo "    REPORT"
+  echo
+  echo "## Files"
+  echo
+  git diff --cached --name-status | sed 's/^/    /'
+  echo
+  echo "## New files under $lib"
+  echo
+  echo "For each, the reviewer names the existing modules it searched and why none fits:"
+  echo
+  new_lib=$(git diff --cached --name-only --diff-filter=A -- "${lib_specs[@]}")
+  if [[ -n "$new_lib" ]]; then sed 's/^/    /' <<<"$new_lib"; else echo "    None."; fi
+  echo
+  echo "## New public definitions"
+  echo
+  echo "Each new def, defmacro, defdelegate, defguard, defmodule and component attr/slot added by this change:"
+  echo
+  git diff --cached -U0 --no-color |
+    awk '
+      /^\+\+\+ / { file = substr($0, 7); next }
+      /^\+[[:space:]]*(def|defmacro|defdelegate|defguard|defmodule)[[:space:]]/ { sub(/^\+[[:space:]]*/, ""); print "    " file ": " $0 }
+      /^\+[[:space:]]*(attr|slot)[[:space:]]+:/ { sub(/^\+[[:space:]]*/, ""); print "    " file ": " $0 }
+    '
+  echo
+  echo "## Diff"
+  echo
+  echo '```diff'
+  git diff --cached --no-color
+  echo '```'
+} >"$packet"
+
+echo "$packet"

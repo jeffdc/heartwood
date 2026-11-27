@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Installs the repository's git hooks. Run it from the repository (the app's
+# `make hooks`); safe to run again.
+#
+# The hooks are versioned in the repository's dev/githooks/, thin scripts
+# that run heartwood's. What's installed is a wrapper in git's hooks
+# directory (wherever core.hooksPath points) that runs the checkout's own
+# dev/githooks/<hook>, so every worktree runs its branch's version. Git config
+# is not changed.
+#
+# - pre-commit (the commit gate): a branch without it commits as before.
+# - pre-push (the push guard) must hold everywhere, so a copy of heartwood's,
+#   with the app's name in it, is kept beside the wrapper and runs on a branch
+#   without dev/githooks/pre-push. Running this again refreshes the copy.
+#
+# A hook that isn't such a wrapper is left alone. Wrappers from before
+# heartwood ("# <app>: runs <dir>/githooks/<hook>") count as ours and are
+# replaced.
+set -euo pipefail
+
+src=$(cd "$(dirname "$0")" && pwd)
+top=$(git rev-parse --show-toplevel)
+cd "$top"
+
+config="dev/guardrails/config.sh"
+if [[ ! -f "$config" ]]; then
+  echo "$config is missing; it holds this repository's guardrail settings (HEARTWOOD_APP and the rest)." >&2
+  exit 1
+fi
+# shellcheck source=/dev/null
+. "$config"
+app=${HEARTWOOD_APP:?dev/guardrails/config.sh must set HEARTWOOD_APP}
+
+hooks_dir=$(git rev-parse --git-path hooks)
+mkdir -p "$hooks_dir"
+
+for hook in pre-commit pre-push; do
+  target="$hooks_dir/$hook"
+  marker="# $app: runs dev/githooks/$hook"
+
+  if [[ -e "$target" ]] && ! grep -qE "^# [A-Za-z0-9_-]+: runs ([A-Za-z0-9_.-]+/)*githooks/$hook\$" "$target"; then
+    echo "$target already has a $hook hook that isn't ours; leaving it alone." >&2
+    echo "Call dev/githooks/$hook from it, or move it aside and run this again." >&2
+    exit 1
+  fi
+
+  fallback="exit 0"
+  if [[ "$hook" = "pre-push" ]]; then
+    {
+      echo '#!/usr/bin/env bash'
+      echo "HEARTWOOD_APP=$app"
+      tail -n +2 "$src/$hook"
+    } >"$hooks_dir/$hook.heartwood"
+    chmod +x "$hooks_dir/$hook.heartwood"
+    fallback="exec \"\$(dirname \"\$0\")/$hook.heartwood\" \"\$@\""
+  fi
+
+  cat >"$target" <<EOF
+#!/bin/sh
+$marker
+hook="\$(git rev-parse --show-toplevel)/dev/githooks/$hook"
+[ -x "\$hook" ] && exec "\$hook" "\$@"
+$fallback
+EOF
+  chmod +x "$target"
+  echo "Installed $target"
+done

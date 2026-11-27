@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+# The commit gate, for any commit: any agent, any harness, or a terminal. Run
+# by the repository's dev/githooks/pre-commit, which hooks/install puts in
+# git's hooks directory; settings come from dev/guardrails/config.sh.
+#
+# Blocks the commit until the tree being committed has a passing reuse review:
+# <git dir>/<app>-review/<tree>.md with "verdict: pass", recorded by
+# bin/record-review from bin/review-packet's packet. Restaging changes the
+# tree, so a fixed change is reviewed again. A commit that concludes a merge
+# goes through, and so does one touching only prose (HEARTWOOD_PROSE).
+#
+# Also blocks a staged mix.lock without heartwood's entries: a local
+# HEARTWOOD_PATH checkout drops them, and the next `mix deps.get` would fail.
+set -uo pipefail
+
+top=$(git rev-parse --show-toplevel) || exit 1
+git_dir=$(cd "$(git rev-parse --git-dir)" && pwd) || exit 1
+config="$top/dev/guardrails/config.sh"
+if [[ ! -f "$config" ]]; then
+  echo "Commit gate: $config is missing; it holds this repository's guardrail settings." >&2
+  exit 1
+fi
+# shellcheck source=/dev/null
+. "$config"
+app=${HEARTWOOD_APP:-heartwood}
+prose=${HEARTWOOD_PROSE:-docs/ README.md}
+
+[[ -f "$git_dir/MERGE_HEAD" ]] && exit 0
+
+# git sets GIT_INDEX_FILE for `commit -a` and `commit <paths>`, so this is the
+# tree that would be committed, not only what was staged.
+tree=$(git write-tree) || exit 1
+
+# --no-renames lists a move by both its paths, so moving code into docs/ is
+# still reviewed.
+files=$(git diff --cached --no-renames --name-only) || exit 1
+
+if grep -qx "mix.lock" <<<"$files" && grep -q ":heartwood_" "$top/mix.exs" 2>/dev/null &&
+  ! git show :mix.lock | grep -q '"heartwood_'; then
+  echo "Commit gate: the staged mix.lock has no heartwood entries, as when HEARTWOOD_PATH points the app at a local heartwood checkout. Unset HEARTWOOD_PATH, run mix deps.get, and restage mix.lock." >&2
+  exit 1
+fi
+
+# The prose paths: a directory (ending in /) covers everything under it, any
+# other entry is one file. AGENTS.md and CLAUDE.md hold rules, so they are
+# always reviewed.
+is_prose() {
+  local file=$1 path
+  case "$file" in AGENTS.md | CLAUDE.md) return 1 ;; esac
+  for path in $prose; do
+    case "$path" in
+      */) [[ "$file" == "$path"* ]] && return 0 ;;
+      *) [[ "$file" == "$path" ]] && return 0 ;;
+    esac
+  done
+  return 1
+}
+
+if [[ -n "$files" ]]; then
+  prose_only=1
+  while IFS= read -r file; do
+    is_prose "$file" || prose_only=0
+  done <<<"$files"
+  [[ $prose_only == 1 ]] && exit 0
+fi
+
+review="$git_dir/$app-review/$tree.md"
+
+if [[ -f "$review" ]] && grep -qx "verdict: pass" "$review"; then
+  exit 0
+fi
+
+if [[ -f "$review" ]]; then
+  echo "Commit gate: the reuse review blocked this change ($review). Fix what it found, restage, and have it reviewed again. If you dispute a finding, ask Jeff; don't re-run the review for a different answer." >&2
+else
+  echo "Commit gate: this change hasn't had a reuse review. Follow \"Before you commit\" in AGENTS.md: make the review packet, have a reviewer with fresh context follow it, and commit once it records a pass." >&2
+fi
+exit 1

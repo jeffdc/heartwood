@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Toolchain comes from the flake's dev shell (flake.nix), the same one used locally.
+# Steps run through `nix develop`; the shell is pre-built in its own step so a broken
+# shell fails clearly and doesn't skew step timings.
+
+jobs:
+  guardrails:
+    name: heartwood_guardrails
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: 'nix develop -c bash -e {0}'
+        working-directory: guardrails
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: cachix/install-nix-action@v31
+
+      - name: Build dev shell
+        shell: bash
+        working-directory: .
+        run: nix build --no-link .#devShells.x86_64-linux.default
+
+      - name: Restore dependencies cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            guardrails/deps
+            guardrails/_build
+          key: ${{ runner.os }}-mix-${{ hashFiles('flake.lock') }}-${{ hashFiles('guardrails/mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-${{ hashFiles('flake.lock') }}-
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Run precommit checks (format, compile, credo, unused deps, tests)
+        run: mix precommit
