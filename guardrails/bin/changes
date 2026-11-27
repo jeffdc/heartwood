@@ -22,7 +22,7 @@
 # path under an area's path touches that area, and a path under none touches
 # every area. A path in HEARTWOOD_CI_ALL (matched like the prose) touches
 # every area too: the classifier's own files, so a change to it is tested
-# whatever it decides.
+# whatever it decides. So does dev/guardrails/config.sh, whatever it says.
 set -euo pipefail
 
 usage() {
@@ -83,7 +83,12 @@ classify() {
   local path i hit
   while IFS= read -r path || [[ -n "$path" ]]; do
     [[ -z "$path" ]] && continue
-    if heartwood_is_prose "$all" "$path"; then touch_all; continue; fi
+    # The settings decide everything else, so a change to them runs
+    # everything, whatever they now say.
+    if [[ $path == dev/guardrails/config.sh ]] || heartwood_is_prose "$all" "$path"; then
+      touch_all
+      continue
+    fi
     heartwood_is_prose "$prose" "$path" && continue
     code=true
     hit=false

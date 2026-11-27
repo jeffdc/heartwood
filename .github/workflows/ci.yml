@@ -43,6 +43,22 @@ jobs:
         with:
           expect: guardrails ui
 
+  # The pull request's own copy of the classifier's action, which the jobs
+  # above don't use: a broken one shows here before it's merged or tagged.
+  # Nothing depends on it, and it isn't a required check.
+  changes-action:
+    name: CI changes action (this branch)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: ./guardrails/actions/changes
+        with:
+          expect: guardrails ui
+
   guardrails:
     name: heartwood_guardrails
     needs: changes

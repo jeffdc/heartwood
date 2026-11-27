@@ -158,7 +158,7 @@ A job skipped by its `if:` satisfies a required check, so the condition also run
 
 What CI skips for is the commit gate's prose plus `HEARTWOOD_CI_PROSE`: a path can be added for CI, not taken out. If the app's code or tests read a file under a prose path (a fixture in `docs/`, say), move it out of the prose path, or a change to it alone will skip the tests.
 
-`bin/changes BASE HEAD` prints `code=true|false` and `areas={"<name>":true|false,...}`; with no arguments it reads paths from standard input, and `--all` prints everything true. `--expect "name ..."`, first, names the areas that must exist. It fails, and so the jobs all run, without `dev/guardrails/config.sh`, on an unknown commit, on an area whose path doesn't end in `/`, or on an expected area that isn't set.
+`bin/changes BASE HEAD` prints `code=true|false` and `areas={"<name>":true|false,...}`; with no arguments it reads paths from standard input, and `--all` prints everything true. `--expect "name ..."`, first, names the areas that must exist. A change to `dev/guardrails/config.sh` itself touches everything, whatever it now says. It fails, and so the jobs all run, without `dev/guardrails/config.sh`, on an unknown commit, on an area whose path doesn't end in `/`, or on an expected area that isn't set.
 
 ### mix.lock and HEARTWOOD_PATH
 

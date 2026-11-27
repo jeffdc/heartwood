@@ -126,6 +126,15 @@ defmodule Heartwood.Guardrails.ChangesTest do
       assert {%{"areas" => ~s({"api":true,"web":true})}, 0} = changes(dir, [], "tools/classify")
     end
 
+    test "a change to the settings touches every area, even one making itself prose", %{
+      dir: dir
+    } do
+      settings!(dir, ~s(HEARTWOOD_CI_PROSE="dev/"\n))
+
+      assert {%{"code" => "true", "areas" => ~s({"api":true,"web":true})}, 0} =
+               changes(dir, [], "dev/guardrails/config.sh")
+    end
+
     test "--expect passes when the workflow's areas are all set", %{dir: dir} do
       assert {%{"code" => "true"}, 0} = changes(dir, ["--expect", "'api web'"], "api/a.ex")
     end
