@@ -171,7 +171,7 @@ With `mix deps.unlock --check-unused` in `precommit` instead, heartwood's entrie
 ```elixir
 precommit: [
   # …
-  fn _ -> if System.get_env("HEARTWOOD_PATH") in [nil, ""], do: Mix.Task.run("deps.unlock", ["--check-unused"]) end,
+  fn _ -> if is_nil(System.get_env("HEARTWOOD_PATH")), do: Mix.Task.run("deps.unlock", ["--check-unused"]) end,
   # …
 ]
 ```
