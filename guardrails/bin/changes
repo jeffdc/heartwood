@@ -17,8 +17,10 @@
 #
 # Prose touches nothing: the commit gate's (HEARTWOOD_PROSE, matched by
 # hooks/prose.sh, a move counted by both its paths) and HEARTWOOD_CI_PROSE,
-# files the gate still reviews but no code reads (AGENTS.md, say), matched
-# the same way. HEARTWOOD_CI_AREAS ("name=path/ ...") splits the code: a
+# files the gate still reviews but no code reads (AGENTS.md, or *.md for
+# every Markdown file), matched the same way. HEARTWOOD_CI_CODE (matched
+# the same way) takes paths back out: prose that code or tests read, such
+# as a prompt under *.md. HEARTWOOD_CI_AREAS ("name=path/ ...") splits the code: a
 # path under an area's path touches that area, and a path under none touches
 # every area. A path in HEARTWOOD_CI_ALL (matched like the prose) touches
 # every area too: the classifier's own files, so a change to it is tested
@@ -50,6 +52,7 @@ fi
 # shellcheck source=/dev/null
 . "$config"
 prose="${HEARTWOOD_PROSE:-docs/ README.md} ${HEARTWOOD_CI_PROSE:-}"
+ci_code="${HEARTWOOD_CI_CODE:-}"
 all="${HEARTWOOD_CI_ALL:-}"
 read -ra areas <<<"${HEARTWOOD_CI_AREAS:-}"
 # An area's path ends in /, so ui=ui/ can't also claim uikit/.
@@ -89,7 +92,9 @@ classify() {
       touch_all
       continue
     fi
-    heartwood_is_prose "$prose" "$path" && continue
+    if ! heartwood_is_prose "$ci_code" "$path" && heartwood_is_prose "$prose" "$path"; then
+      continue
+    fi
     code=true
     hit=false
     for i in "${!areas[@]}"; do

@@ -15,10 +15,14 @@ HEARTWOOD_HOME=guardrails
 HEARTWOOD_PROSE="docs/ README.md guardrails/README.md guardrails/CHANGELOG.md ui/README.md ui/CHANGELOG.md"
 
 # CI (guardrails/bin/changes, guardrails/actions/changes): files that are
-# prose to CI though the commit gate still reviews them, and the areas a
-# change's code is split into, each a "name=path/". A path outside every
-# area touches them all.
-HEARTWOOD_CI_PROSE="AGENTS.md CLAUDE.md PRODUCT.md"
+# prose to CI though the commit gate still reviews them (matched like
+# HEARTWOOD_PROSE, where *.md is every Markdown file), the ones among them
+# that code reads, and the areas a change's code is split into, each a
+# "name=path/". A path outside every area touches them all.
+HEARTWOOD_CI_PROSE="*.md LICENSE"
+# The reviewers' instructions go into the review packets, which the tests
+# check.
+HEARTWOOD_CI_CODE="guardrails/review/"
 HEARTWOOD_CI_AREAS="guardrails=guardrails/ ui=ui/"
 # Changes to the classifier itself run everything. heartwood's workflows use
 # main's classifier, so a pull request's changes to the classifier's code

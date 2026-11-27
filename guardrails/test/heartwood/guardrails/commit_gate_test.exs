@@ -182,6 +182,20 @@ defmodule Heartwood.Guardrails.CommitGateTest do
       assert status != 0
     end
 
+    test "under a prose pattern goes through unreviewed, but AGENTS.md still needs a review",
+         %{tmp_dir: dir} do
+      path = Path.join(dir, "dev/guardrails/config.sh")
+      File.write!(path, File.read!(path) <> ~s(HEARTWOOD_PROSE="*.md"\n))
+      stage(dir, ["lib/deep/notes.md"])
+
+      assert {_, 0} = git(dir, ["commit", "-q", "-m", "Notes"])
+
+      stage(dir, ["lib/more.md", "AGENTS.md"])
+
+      assert {_, status} = git(dir, ["commit", "-m", "Rules"])
+      assert status != 0
+    end
+
     test "a file that only starts like a prose directory needs a review", %{tmp_dir: dir} do
       stage(dir, ["docsets/a.md"])
 

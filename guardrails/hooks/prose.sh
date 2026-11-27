@@ -9,18 +9,23 @@
 #
 # heartwood_is_prose PROSE FILE: whether FILE is one of PROSE's paths
 # (HEARTWOOD_PROSE): a directory, ending in /, covers everything under it;
-# any other entry is one file.
+# any other entry is one file, or a pattern (*, ? and [...], as in bash's
+# [[ == ]]), where * matches across /: *.md is every Markdown file.
 
 heartwood_changed_files() {
   git diff --no-renames --name-only "$@"
 }
 
 heartwood_is_prose() {
-  local prose=$1 file=$2 path
-  for path in $prose; do
+  local file=$2 path paths
+  # read, not an unquoted $1, so a pattern isn't expanded against the
+  # files in the working directory.
+  read -ra paths <<<"$1"
+  for path in ${paths[@]+"${paths[@]}"}; do
     case "$path" in
       */) [[ "$file" == "$path"* ]] && return 0 ;;
-      *) [[ "$file" == "$path" ]] && return 0 ;;
+      # shellcheck disable=SC2053 # unquoted: the entry is a pattern
+      *) [[ "$file" == $path ]] && return 0 ;;
     esac
   done
   return 1
