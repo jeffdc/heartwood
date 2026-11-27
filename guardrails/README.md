@@ -118,7 +118,7 @@ Baselines are written by `mix heartwood.baseline MyAppWeb.Conformance` (or with 
    | `HEARTWOOD_PROSE` | Paths a commit may touch without a review: a directory ends in `/`, anything else is one file or a pattern (`*`, `?` and `[...]`, as in bash's `[[ == ]]`, where `*` matches across `/`, so `*.md` is every Markdown file). AGENTS.md and CLAUDE.md are always reviewed. | `docs/ README.md` |
    | `HEARTWOOD_LIB` | Where a new file needs the reviewer's justification | `lib/` |
    | `HEARTWOOD_CI_PROSE` | Files that are prose to CI (`bin/changes`) though the commit gate still reviews them, as `AGENTS.md`, or `*.md` for every Markdown file; matched like `HEARTWOOD_PROSE` | none |
-| `HEARTWOOD_CI_CODE` | Paths that are code to CI though a prose path or pattern covers them: files the app's code or tests read, as `prompts/` under `*.md`; matched like `HEARTWOOD_PROSE` | none |
+   | `HEARTWOOD_CI_CODE` | Paths that are code to CI though a prose path or pattern covers them: files the app's code or tests read, as `prompts/` under `*.md`; matched like `HEARTWOOD_PROSE` | none |
    | `HEARTWOOD_CI_AREAS` | The areas `bin/changes` splits a change's code into, each `name=path/`; a path outside every area touches them all | none |
    | `HEARTWOOD_CI_ALL` | Paths that touch every area when they change (matched like `HEARTWOOD_PROSE`): files that decide what CI runs, so a change to them runs everything | none |
    | `HEARTWOOD_CHECKLIST` | The app's own questions for the reviewer, and where to look for existing code | `dev/guardrails/checklist.md` |
