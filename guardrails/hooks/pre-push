@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# The push guard, for any push: any agent, any harness, or a terminal. Run by
+# the repository's dev/githooks/pre-push, which hooks/install puts in git's
+# hooks directory, or by the copy the install keeps beside it.
+#
+# 1. Blocks force pushes (history rewriting) from anyone.
+# 2. Blocks pushes to main or master from anyone: main changes through a pull
+#    request. To push main yourself, set <APP>_PUSH_MAIN=1 for that one push
+#    (OAKS_PUSH_MAIN, GALLFORMERS_PUSH_MAIN; <APP> is HEARTWOOD_APP in
+#    dev/guardrails/config.sh). Agents never do.
+#
+# git passes "<local ref> <local sha> <remote ref> <remote sha>" lines on stdin.
+set -uo pipefail
+
+top=$(git rev-parse --show-toplevel 2>/dev/null) || top=""
+config="$top/dev/guardrails/config.sh"
+# shellcheck source=/dev/null
+[[ -n "$top" && -f "$config" ]] && . "$config"
+
+override="$(tr '[:lower:]-' '[:upper:]_' <<<"${HEARTWOOD_APP:-heartwood}")_PUSH_MAIN"
+zero=0000000000000000000000000000000000000000
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  # A branch deletion.
+  [[ "$local_sha" = "$zero" ]] && continue
+
+  if [[ "$remote_sha" != "$zero" ]] &&
+    ! git merge-base --is-ancestor "$remote_sha" "$local_sha" 2>/dev/null; then
+    echo "Blocked: force push to ${remote_ref} (history would be rewritten)." >&2
+    exit 1
+  fi
+
+  branch="${remote_ref#refs/heads/}"
+  if [[ "$branch" = "main" || "$branch" = "master" ]] && [[ "${!override:-}" != "1" ]]; then
+    echo "Blocked: pushes to main and master go through a pull request." >&2
+    echo "To push it yourself: $override=1 git push ... (agents never do)." >&2
+    exit 1
+  fi
+done
+
+exit 0

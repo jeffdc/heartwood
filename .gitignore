@@ -1,0 +1,21 @@
+# OS and editor files
+.DS_Store
+.vscode
+
+# Claude Code settings
+.claude/settings.json
+.claude/settings.local.json
+
+# direnv
+.direnv/
+.envrc.local
+
+# Elixir, per package
+/guardrails/_build/
+/guardrails/deps/
+/guardrails/cover/
+/guardrails/tmp/
+/guardrails/priv/plts/
+/guardrails/doc/
+/guardrails/*.ez
+erl_crash.dump
