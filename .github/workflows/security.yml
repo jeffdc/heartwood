@@ -30,8 +30,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      # main's classifier, not the pull request's: a pull request that changes
+      # the classifier is never classified by it (HEARTWOOD_CI_ALL then runs
+      # everything). Until main has it, the job fails and everything runs.
       - id: changes
-        uses: ./guardrails/actions/changes
+        uses: jeffdc/heartwood/guardrails/actions/changes@main
         with:
           expect: guardrails ui
 
