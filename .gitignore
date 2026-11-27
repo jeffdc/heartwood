@@ -15,6 +15,7 @@
 /guardrails/deps/
 /guardrails/cover/
 /guardrails/tmp/
+/guardrails/priv/plts/
 /guardrails/doc/
 /guardrails/*.ez
 erl_crash.dump

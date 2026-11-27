@@ -15,6 +15,7 @@ defmodule Heartwood.Guardrails.MixProject do
       description:
         "Ratchets, retirements, git hooks and the reuse review shared by Oak Compendium and Gallformers.",
       source_url: @source_url,
+      dialyzer: dialyzer(),
       aliases: aliases()
     ]
   end
@@ -30,7 +31,21 @@ defmodule Heartwood.Guardrails.MixProject do
     [
       {:jason, "~> 1.2"},
       # Started by DuplicateCode when it runs, not with the app.
-      {:credo, "~> 1.7", runtime: false}
+      {:credo, "~> 1.7", runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:mix_audit, "~> 2.1", only: [:dev, :test], runtime: false}
+    ]
+  end
+
+  defp dialyzer do
+    [
+      plt_core_path: "priv/plts/core.plt",
+      plt_local_path: "priv/plts/project.plt",
+      plt_add_apps: [:mix, :ex_unit, :credo],
+      flags: [
+        :error_handling,
+        :unknown
+      ]
     ]
   end
 

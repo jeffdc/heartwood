@@ -6,7 +6,7 @@ Code shared by Oak Compendium (`~/dev/oaks`) and Gallformers (`~/dev/gallformers
 
 - **Run everything inside the Nix dev shell** (direnv, or `nix develop -c <cmd>`): the same Elixir and OTP as both apps.
 - **Each package is its own Mix project** in its folder (`guardrails/`); run mix there.
-- **`make check` must pass** before work is finished: each package's `mix precommit` (format, compile with warnings as errors, `credo --strict`, unused deps, tests). CI runs the same.
+- **`make done-checks` must pass** before work is finished: each package's `mix precommit` (format, compile with warnings as errors, `credo --strict`, unused deps, tests), Dialyzer and the security audits. CI requires the same.
 - **Search before you write.** Look in the packages for code that already does the job before adding a module, function or script.
 - **Scripts and hooks are tested** by running them for real (git in throwaway repositories, `check-toolchain` against fixture roots). A change to one changes its test.
 - **Prose isn't hard-wrapped:** one line per paragraph or list item, in docs, READMEs, changelogs and commit message bodies. Code comments follow the file.

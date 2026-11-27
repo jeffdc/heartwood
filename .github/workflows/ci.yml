@@ -49,3 +49,42 @@ jobs:
 
       - name: Run precommit checks (format, compile, credo, unused deps, tests)
         run: mix precommit
+
+  # A separate job so the PLT cache (guardrails/priv/plts) can key on its own; it's
+  # rebuilt only when deps or the toolchain change.
+  dialyzer:
+    name: Dialyzer
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: 'nix develop -c bash -e {0}'
+        working-directory: guardrails
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: cachix/install-nix-action@v31
+
+      - name: Build dev shell
+        shell: bash
+        working-directory: .
+        run: nix build --no-link .#devShells.x86_64-linux.default
+
+      - name: Restore dependencies and PLT cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            guardrails/deps
+            guardrails/_build
+            guardrails/priv/plts
+          key: ${{ runner.os }}-dialyzer-${{ hashFiles('flake.lock') }}-${{ hashFiles('guardrails/mix.lock') }}
+          restore-keys: ${{ runner.os }}-dialyzer-${{ hashFiles('flake.lock') }}-
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Run Dialyzer
+        run: |
+          mkdir -p priv/plts
+          mix dialyzer --format github --format dialyxir
