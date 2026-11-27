@@ -8,6 +8,22 @@ updates:
       mix:
         patterns:
           - "*"
+  - package-ecosystem: mix
+    directory: /ui
+    schedule:
+      interval: weekly
+    groups:
+      mix-ui:
+        patterns:
+          - "*"
+  - package-ecosystem: npm
+    directory: /ui
+    schedule:
+      interval: weekly
+    groups:
+      npm:
+        patterns:
+          - "*"
   - package-ecosystem: github-actions
     directory: /
     schedule:

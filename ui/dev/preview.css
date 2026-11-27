@@ -1,0 +1,124 @@
+/* The preview page, and the two apps' adapter blocks.
+
+   The adapters are fixtures: each copies its app's tokens (as custom
+   properties on the page, the way the app's own stylesheet defines them)
+   and its mapping onto the component's --pv-* properties, so the preview
+   shows that the contract holds. Oak Compendium's are from oaks/DESIGN.md
+   and its .oc-photos block; Gallformers' from gallformers'
+   docs/design-system/foundations.md (2026-11-27). */
+
+@layer theme, base, components, utilities;
+
+/* -- The page -- */
+body { margin: 0; font: 15px/1.5 system-ui, sans-serif; }
+.page { min-height: 100vh; padding: 0 24px 64px; background: #f6f6f3; color: #1d1d1b; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; padding: 16px 0; border-bottom: 1px solid #0002; }
+.bar h1 { margin: 0; font-size: 18px; }
+.bar form { display: flex; gap: 16px; }
+.bar label { display: flex; gap: 6px; align-items: center; font-weight: 600; }
+.note { flex-basis: 100%; margin: 0; font-size: 13px; opacity: 0.75; }
+section { margin-top: 40px; }
+section > h2 { margin: 0 0 12px; font-size: 14px; font-weight: 600; opacity: 0.75; }
+.slot { max-width: 100%; }
+.slot + .slot { margin-top: 24px; }
+.log { margin: 12px 0 0; padding-left: 20px; font: 13px/1.5 ui-monospace, monospace; opacity: 0.75; }
+
+/* -- Oak Compendium: its tokens, and .oc-photos as oaks has it -- */
+.page-oaks {
+  --color-ink: #161616;
+  --color-ink-2: #3d3d3a;
+  --color-ink-3: #5c5c57;
+  --color-paper: #fbfbf7;
+  --color-paper-2: #f1f0e8;
+  --color-pencil: #2f5fb3;
+  --color-rule: #16161626;
+  --color-rule-strong: #161616;
+  --font-frame: Archivo, "Helvetica Neue", Arial, sans-serif;
+  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+.oc-photos {
+  --pv-ink: var(--color-ink);
+  --pv-ink-2: var(--color-ink-2);
+  --pv-ink-3: var(--color-ink-3);
+  --pv-ground: var(--color-paper-2);
+  --pv-frame-border: 1px solid var(--color-rule);
+  --pv-paper: var(--color-paper);
+  --pv-rule: var(--color-rule);
+  --pv-rule-strong: var(--color-rule-strong);
+  --pv-focus: var(--color-pencil);
+  --pv-link: var(--color-pencil);
+  --pv-frame-font: var(--font-frame);
+  --pv-read-font: var(--font-serif);
+  --pv-badge: color-mix(in srgb, var(--color-paper) 92%, transparent);
+  --pv-badge-ink: var(--color-ink);
+  --pv-lightbox: var(--color-ink);
+  --pv-lightbox-ink: var(--color-paper);
+  --pv-backdrop: color-mix(in srgb, var(--color-ink) 65%, transparent);
+}
+
+/* -- Gallformers: its tokens, light and dark, and a .gf- adapter -- */
+.page-gf, .page-gf-dark {
+  --gf-ink: #1e1b1a;
+  --gf-ink-2: #4a4442;
+  --gf-muted: #736b68;
+  --gf-link: #1c5d8f;
+  --gf-paper: #fbfaf9;
+  --gf-surface: #ffffff;
+  --gf-surface-2: #f4f1ef;
+  --gf-line: #e6e1de;
+  --gf-line-strong: #d3ccc8;
+  --gf-overlay: rgb(30 27 26 / 0.55);
+  --radius-ctl: 4px;
+  --radius-panel: 8px;
+  --font-sans: "Source Sans 3", system-ui, sans-serif;
+  --font-brand: "League Spartan", "Source Sans 3", sans-serif;
+  background: var(--gf-paper);
+  color: var(--gf-ink);
+}
+.page-gf-dark {
+  color-scheme: dark;
+  --gf-ink: #ece7e4;
+  --gf-ink-2: #c9c1bd;
+  --gf-muted: #9d9490;
+  --gf-link: #86bdea;
+  --gf-paper: #141213;
+  --gf-surface: #1c191a;
+  --gf-surface-2: #252122;
+  --gf-line: #322d2c;
+  --gf-line-strong: #463f3d;
+  --gf-overlay: rgb(0 0 0 / 0.65);
+}
+.page-gf .bar, .page-gf-dark .bar { border-color: var(--gf-line); }
+.gf-photos {
+  --pv-ink: var(--gf-ink);
+  --pv-ink-2: var(--gf-ink-2);
+  --pv-ink-3: var(--gf-muted);
+  --pv-ground: var(--gf-surface-2);
+  --pv-paper: var(--gf-surface);
+  --pv-rule: var(--gf-line);
+  --pv-rule-strong: var(--gf-line-strong);
+  --pv-focus: var(--gf-link);
+  --pv-link: var(--gf-link);
+  --pv-frame-font: var(--font-sans);
+  --pv-read-font: var(--font-sans);
+  --pv-title-font: var(--font-brand);
+  --pv-cap-font: italic 400 14px/1.4 var(--font-sans);
+  --pv-cap-ink: var(--gf-ink-2);
+  --pv-credit-font: 400 12px/1.45 var(--font-sans);
+  --pv-meta-font: 400 14px/1.35 var(--font-sans);
+  --pv-radius: var(--radius-panel);
+  --pv-thumb-radius: var(--radius-ctl);
+  --pv-control-radius: var(--radius-ctl);
+  --pv-dialog-radius: var(--radius-panel);
+  --pv-dialog-border: 1px solid var(--gf-line);
+  --pv-stage-ratio: 4 / 3;
+  --pv-visible-wide: 7;
+  --pv-badge: rgb(20 18 19 / 0.72);
+  --pv-badge-ink: #ffffff;
+  --pv-badge-radius: var(--radius-ctl);
+  --pv-lightbox: #141213;
+  --pv-lightbox-ink: #ece7e4;
+  --pv-backdrop: var(--gf-overlay);
+}

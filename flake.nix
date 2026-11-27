@@ -28,6 +28,8 @@
               pkgs.git
               beam.erlang
               beam.elixir_1_19
+              # heartwood_ui's browser tests (Playwright); the apps need no Node.
+              pkgs.nodejs_22
             ];
           };
         }

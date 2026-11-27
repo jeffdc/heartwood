@@ -12,10 +12,10 @@ HEARTWOOD_HOME=guardrails
 
 # Paths a commit may touch without a reuse review: a directory ends in /,
 # anything else is one file. AGENTS.md and CLAUDE.md are always reviewed.
-HEARTWOOD_PROSE="docs/ README.md guardrails/README.md guardrails/CHANGELOG.md"
+HEARTWOOD_PROSE="docs/ README.md guardrails/README.md guardrails/CHANGELOG.md ui/README.md ui/CHANGELOG.md"
 
 # Where a new file needs the reviewer's justification.
-HEARTWOOD_LIB="guardrails/lib/"
+HEARTWOOD_LIB="guardrails/lib/ ui/lib/"
 
 # This repository's questions for the reviewer, added to the packet.
 HEARTWOOD_CHECKLIST=dev/guardrails/checklist.md
