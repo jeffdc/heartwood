@@ -117,6 +117,26 @@ defmodule Heartwood.Guardrails.ChangesTest do
                between(dir, [{"docs/api.md", "x"}])
     end
 
+    test "a path in HEARTWOOD_CI_ALL touches every area", %{dir: dir} do
+      settings!(dir, ~s(HEARTWOOD_CI_ALL="api/ci/ tools/classify"\n))
+
+      assert {%{"areas" => ~s({"api":true,"web":true})}, 0} =
+               changes(dir, [], "api/ci/check.sh")
+
+      assert {%{"areas" => ~s({"api":true,"web":true})}, 0} = changes(dir, [], "tools/classify")
+    end
+
+    test "--expect passes when the workflow's areas are all set", %{dir: dir} do
+      assert {%{"code" => "true"}, 0} = changes(dir, ["--expect", "'api web'"], "api/a.ex")
+    end
+
+    test "--expect fails on an area that isn't set, so CI runs everything", %{dir: dir} do
+      {out, status} = cmd(dir, script("bin/changes"), ["--expect", "api ui", "--all"])
+
+      assert status != 0
+      assert out =~ ~s(no area "ui")
+    end
+
     test "--all touches everything, for a push or a scheduled run", %{dir: dir} do
       assert {%{"code" => "true", "areas" => ~s({"api":true,"web":true})}, 0} =
                changes(dir, ["--all"])

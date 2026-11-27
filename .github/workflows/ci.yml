@@ -37,6 +37,8 @@ jobs:
 
       - id: changes
         uses: ./guardrails/actions/changes
+        with:
+          expect: guardrails ui
 
   guardrails:
     name: heartwood_guardrails

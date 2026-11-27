@@ -20,6 +20,9 @@ HEARTWOOD_PROSE="docs/ README.md guardrails/README.md guardrails/CHANGELOG.md ui
 # area touches them all.
 HEARTWOOD_CI_PROSE="AGENTS.md CLAUDE.md PRODUCT.md"
 HEARTWOOD_CI_AREAS="guardrails=guardrails/ ui=ui/"
+# CI classifies a pull request with the pull request's own classifier, so a
+# change to it runs everything, whatever it decides.
+HEARTWOOD_CI_ALL="guardrails/bin/changes guardrails/hooks/prose.sh guardrails/actions/"
 
 # Where a new file needs the reviewer's justification.
 HEARTWOOD_LIB="guardrails/lib/ ui/lib/"

@@ -32,6 +32,8 @@ jobs:
 
       - id: changes
         uses: ./guardrails/actions/changes
+        with:
+          expect: guardrails ui
 
   elixir-audit:
     name: Elixir Security Audit

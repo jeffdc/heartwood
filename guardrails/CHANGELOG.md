@@ -4,7 +4,7 @@ Every release that changes `heartwood_guardrails`, newest first. An entry that n
 
 ## v0.2.1 (2026-11-27)
 
-- New: skipping the CI jobs a pull request doesn't need. `bin/changes` sorts a change's paths into prose and code, and the code into areas, with two new settings: `HEARTWOOD_CI_PROSE` (files that are prose to CI though the commit gate still reviews them) and `HEARTWOOD_CI_AREAS`. `actions/changes` runs it in a workflow. The README's "CI: skipping what a change doesn't touch" shows how.
+- New: skipping the CI jobs a pull request doesn't need. `bin/changes` sorts a change's paths into prose and code, and the code into areas, with three new settings: `HEARTWOOD_CI_PROSE` (files that are prose to CI though the commit gate still reviews them), `HEARTWOOD_CI_AREAS` and `HEARTWOOD_CI_ALL` (paths that run everything). `actions/changes` runs it in a workflow; its `expect` input names the areas the workflow reads, so a missing one fails rather than skipping jobs. The README's "CI: skipping what a change doesn't touch" shows how.
 - What counts as prose, and how a change's files are listed, is now `hooks/prose.sh`, which the commit gate and `bin/changes` both use. The commit gate behaves as before.
 
 Upgrade (optional; nothing changes until an app adopts it): move `@heartwood_tag` to `v0.2.1`. To skip CI on prose-only pull requests, add the `changes` job and the conditions from the README to each workflow that tests code, with `HEARTWOOD_CI_PROSE` in `dev/guardrails/config.sh` for anything else that is prose to CI.

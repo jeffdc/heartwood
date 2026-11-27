@@ -6,6 +6,15 @@ description: >
   as changing everything. Check the repository out with its history
   (fetch-depth: 0) first.
 
+inputs:
+  expect:
+    description: >
+      The areas the workflow reads, space-separated: one missing from
+      HEARTWOOD_CI_AREAS fails the step, so every job runs, instead of
+      being read as empty and skipped.
+    required: false
+    default: ""
+
 outputs:
   code:
     description: "'true' when anything but prose changed"
@@ -24,10 +33,11 @@ runs:
         EVENT: ${{ github.event_name }}
         BASE: ${{ github.event.pull_request.base.sha }}
         HEAD: ${{ github.event.pull_request.head.sha }}
+        EXPECT: ${{ inputs.expect }}
       run: |
         changes="$GITHUB_ACTION_PATH/../../bin/changes"
         if [ "$EVENT" = "pull_request" ]; then
-          "$changes" "$BASE" "$HEAD" | tee -a "$GITHUB_OUTPUT"
+          "$changes" --expect "$EXPECT" "$BASE" "$HEAD" | tee -a "$GITHUB_OUTPUT"
         else
-          "$changes" --all | tee -a "$GITHUB_OUTPUT"
+          "$changes" --expect "$EXPECT" --all | tee -a "$GITHUB_OUTPUT"
         fi

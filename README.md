@@ -16,7 +16,7 @@ The packages aren't on Hex. An app depends on each one from GitHub, pinned to a 
 ```elixir
 {:heartwood_guardrails,
  github: "jeffdc/heartwood", sparse: "guardrails", tag: "v0.2.1", only: [:dev, :test], runtime: false},
-{:heartwood_ui, github: "jeffdc/heartwood", sparse: "ui", tag: "v0.2.1"}
+{:heartwood_ui, github: "jeffdc/heartwood", sparse: "ui", tag: "v0.2.0"}
 ```
 
 `mix.lock` records the exact commit. Each app keeps its own rules, baselines and settings; heartwood holds only what is the same for both.
