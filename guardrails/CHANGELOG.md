@@ -2,6 +2,13 @@
 
 Every release that changes `heartwood_guardrails`, newest first. An entry that needs something from an app has "Upgrade:" steps. Versions are heartwood's tags (`v0.y.z`, one series for every package); while it's 0.x, a minor version needs action from an app and a patch is a drop-in.
 
+## v0.2.2 (2026-11-27)
+
+- New: patterns in the prose settings. An entry in `HEARTWOOD_PROSE`, `HEARTWOOD_CI_PROSE` or `HEARTWOOD_CI_ALL` may be a pattern (`*`, `?` and `[...]`), where `*` matches across `/`: `HEARTWOOD_CI_PROSE="*.md"` makes every Markdown file prose to CI, new ones included, without listing each. Entries without those characters match as before.
+- New: `HEARTWOOD_CI_CODE`, paths that are code to CI though a prose path or pattern covers them, for the Markdown an app's code or tests read (prompts, imported content, fixtures). It takes paths out of the commit gate's prose for CI too, so a fixture under `docs/` no longer has to move.
+
+Upgrade (optional; nothing changes until an app sets them): move `@heartwood_tag` and the `actions/changes` pin to the new tag. To skip CI for any Markdown, add `*.md` to `HEARTWOOD_CI_PROSE` and list the Markdown the app's code or tests read in `HEARTWOOD_CI_CODE`.
+
 ## v0.2.1 (2026-11-27)
 
 - New: skipping the CI jobs a pull request doesn't need. `bin/changes` sorts a change's paths into prose and code, and the code into areas, with three new settings: `HEARTWOOD_CI_PROSE` (files that are prose to CI though the commit gate still reviews them), `HEARTWOOD_CI_AREAS` and `HEARTWOOD_CI_ALL` (paths that run everything, as a change to `dev/guardrails/config.sh` always does). `actions/changes` runs it in a workflow; its `expect` input names the areas the workflow reads, so a missing one fails rather than skipping jobs. The README's "CI: skipping what a change doesn't touch" shows how.

@@ -90,6 +90,29 @@ defmodule Heartwood.Guardrails.ChangesTest do
       assert %{"code" => "false"} = between(dir, [{"AGENTS.md", "x"}, {"PRODUCT.md", "x"}])
       assert %{"code" => "true"} = between(dir, [{"DESIGN.md", "x"}])
     end
+
+    test "a pattern's * matches across /, and isn't expanded against the working directory",
+         %{dir: dir} do
+      settings!(dir, ~s(HEARTWOOD_CI_PROSE="*.md LICENSE"\n))
+      write!(dir, "NOTES.md", "x")
+
+      assert {%{"code" => "false"}, 0} =
+               changes(dir, [], "lib/deep/notes.md\nAGENTS.md\nLICENSE")
+
+      assert {%{"code" => "true"}, 0} = changes(dir, [], "lib/notes.mdx")
+    end
+
+    test "HEARTWOOD_CI_CODE takes paths back out of the prose, the commit gate's too",
+         %{dir: dir} do
+      settings!(
+        dir,
+        ~s(HEARTWOOD_CI_PROSE="*.md"\nHEARTWOOD_CI_CODE="prompts/ docs/fixtures/*"\n)
+      )
+
+      assert {%{"code" => "false"}, 0} = changes(dir, [], "lib/notes.md\ndocs/guide.md")
+      assert {%{"code" => "true"}, 0} = changes(dir, [], "prompts/lem.md")
+      assert {%{"code" => "true"}, 0} = changes(dir, [], "docs/fixtures/page.md")
+    end
   end
 
   describe "with areas" do
@@ -115,6 +138,11 @@ defmodule Heartwood.Guardrails.ChangesTest do
     test "prose in an area touches nothing", %{dir: dir} do
       assert %{"code" => "false", "areas" => ~s({"api":false,"web":false})} =
                between(dir, [{"docs/api.md", "x"}])
+
+      settings!(dir, ~s(HEARTWOOD_CI_PROSE="*.md"\n))
+
+      assert {%{"code" => "false", "areas" => ~s({"api":false,"web":false})}, 0} =
+               changes(dir, [], "api/README.md")
     end
 
     test "a path in HEARTWOOD_CI_ALL touches every area", %{dir: dir} do
