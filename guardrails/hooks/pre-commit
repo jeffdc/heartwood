@@ -31,9 +31,12 @@ prose=${HEARTWOOD_PROSE:-docs/ README.md}
 # tree that would be committed, not only what was staged.
 tree=$(git write-tree) || exit 1
 
-# --no-renames lists a move by both its paths, so moving code into docs/ is
-# still reviewed.
-files=$(git diff --cached --no-renames --name-only) || exit 1
+# shellcheck source-path=SCRIPTDIR source=prose.sh
+. "$(dirname "${BASH_SOURCE[0]}")/prose.sh"
+
+# A move is listed by both its paths, so moving code into docs/ is still
+# reviewed.
+files=$(heartwood_changed_files --cached) || exit 1
 
 if grep -qx "mix.lock" <<<"$files" && grep -q ":heartwood_" "$top/mix.exs" 2>/dev/null &&
   ! git show :mix.lock | grep -q '"heartwood_'; then
@@ -41,19 +44,10 @@ if grep -qx "mix.lock" <<<"$files" && grep -q ":heartwood_" "$top/mix.exs" 2>/de
   exit 1
 fi
 
-# The prose paths: a directory (ending in /) covers everything under it, any
-# other entry is one file. AGENTS.md and CLAUDE.md hold rules, so they are
-# always reviewed.
+# AGENTS.md and CLAUDE.md hold rules, so they are always reviewed.
 is_prose() {
-  local file=$1 path
-  case "$file" in AGENTS.md | CLAUDE.md) return 1 ;; esac
-  for path in $prose; do
-    case "$path" in
-      */) [[ "$file" == "$path"* ]] && return 0 ;;
-      *) [[ "$file" == "$path" ]] && return 0 ;;
-    esac
-  done
-  return 1
+  case "$1" in AGENTS.md | CLAUDE.md) return 1 ;; esac
+  heartwood_is_prose "$prose" "$1"
 }
 
 if [[ -n "$files" ]]; then

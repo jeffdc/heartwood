@@ -15,8 +15,28 @@ permissions:
   contents: read
 
 jobs:
+  # Which packages the change touches (.github/actions/changes): a pull
+  # request that changes only prose skips the jobs below, and a skipped job
+  # still satisfies a required check. If this job fails, they all run: a job
+  # skipped for a failure would satisfy its required check too.
+  changes:
+    name: Security changes
+    runs-on: ubuntu-latest
+    outputs:
+      guardrails: ${{ steps.changes.outputs.guardrails }}
+      ui: ${{ steps.changes.outputs.ui }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - id: changes
+        uses: ./.github/actions/changes
+
   elixir-audit:
     name: Elixir Security Audit
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.guardrails == 'true') }}
     runs-on: ubuntu-latest
 
     # Toolchain from the flake's dev shell (flake.nix), same as CI and local dev.
@@ -58,6 +78,8 @@ jobs:
 
   ui-elixir-audit:
     name: heartwood_ui Elixir Security Audit
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.ui == 'true') }}
     runs-on: ubuntu-latest
 
     defaults:
@@ -97,6 +119,8 @@ jobs:
   # The npm packages are heartwood_ui's test tools only; the apps never load them.
   ui-npm-audit:
     name: heartwood_ui npm Audit
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.ui == 'true') }}
     runs-on: ubuntu-latest
 
     defaults:
