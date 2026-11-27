@@ -5,7 +5,7 @@ Code shared by [Oak Compendium](https://github.com/jeffdc/oaks) and [Gallformers
 | Package | Folder | What it holds | How an app depends on it |
 |---|---|---|---|
 | `heartwood_guardrails` | [`guardrails/`](guardrails/README.md) | Ratchets (pattern rules and copied code held to a baseline), retirements, the commit gate and push guard, the reuse review's packet, the architecture review, `check-toolchain`, `mix heartwood.status` | `only: [:dev, :test], runtime: false` |
-| `heartwood_ui` | `ui/` (to come) | Function components with their hooks and CSS: the photo viewer, then the fragment-and-reader | runtime |
+| `heartwood_ui` | [`ui/`](ui/README.md) | Function components with their hooks and CSS: the photo viewer, then the fragment-and-reader | runtime |
 
 Each package's README describes how to use it and lists its contract: what a change must name in the package's CHANGELOG.md when it changes.
 
@@ -15,7 +15,8 @@ The packages aren't on Hex. An app depends on each one from GitHub, pinned to a 
 
 ```elixir
 {:heartwood_guardrails,
- github: "jeffdc/heartwood", sparse: "guardrails", tag: "v0.1.1", only: [:dev, :test], runtime: false}
+ github: "jeffdc/heartwood", sparse: "guardrails", tag: "v0.1.1", only: [:dev, :test], runtime: false},
+{:heartwood_ui, github: "jeffdc/heartwood", sparse: "ui", tag: "v0.2.0"}
 ```
 
 `mix.lock` records the exact commit. Each app keeps its own rules, baselines and settings; heartwood holds only what is the same for both.

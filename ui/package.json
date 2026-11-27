@@ -1,0 +1,12 @@
+{
+  "name": "heartwood-ui-tests",
+  "private": true,
+  "type": "module",
+  "description": "heartwood_ui's browser tests, run against the preview (mix dev). Apps don't need any of this.",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1"
+  }
+}

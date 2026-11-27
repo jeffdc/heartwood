@@ -19,3 +19,17 @@
 /guardrails/doc/
 /guardrails/*.ez
 erl_crash.dump
+/ui/_build/
+/ui/deps/
+/ui/cover/
+/ui/tmp/
+/ui/doc/
+/ui/priv/plts/
+/ui/*.ez
+/ui/node_modules/
+/ui/test-results/
+/ui/playwright-report/
+
+# Impeccable's local state (its config.json is committed)
+/.impeccable/mocks/
+/.impeccable/hook.cache.json

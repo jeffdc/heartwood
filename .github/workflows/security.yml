@@ -55,3 +55,65 @@ jobs:
         run: mix deps.audit
 
       # No Sobelow: it scans Phoenix apps, and heartwood_guardrails isn't one.
+
+  ui-elixir-audit:
+    name: heartwood_ui Elixir Security Audit
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: 'nix develop -c bash -e {0}'
+        working-directory: ui
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - uses: cachix/install-nix-action@v32
+
+      - name: Build dev shell
+        shell: bash
+        working-directory: .
+        run: nix build --no-link .#devShells.x86_64-linux.default
+
+      - name: Restore dependencies cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            ui/deps
+            ui/_build
+          key: ${{ runner.os }}-mix-ui-${{ hashFiles('flake.lock') }}-${{ hashFiles('ui/mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-ui-${{ hashFiles('flake.lock') }}-
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Check retired Hex packages
+        run: mix hex.audit
+
+      - name: Audit Mix dependencies for vulnerabilities
+        run: mix deps.audit
+
+  # The npm packages are heartwood_ui's test tools only; the apps never load them.
+  ui-npm-audit:
+    name: heartwood_ui npm Audit
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: 'nix develop -c bash -e {0}'
+        working-directory: ui
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - uses: cachix/install-nix-action@v32
+
+      - name: Build dev shell
+        shell: bash
+        working-directory: .
+        run: nix build --no-link .#devShells.x86_64-linux.default
+
+      - name: Audit npm packages for vulnerabilities
+        run: npm audit

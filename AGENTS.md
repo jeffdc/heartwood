@@ -1,13 +1,14 @@
 # Heartwood
 
-Code shared by Oak Compendium (`~/dev/oaks`) and Gallformers (`~/dev/gallformers`). What's here is used by both, so it must fit both: anything specific to one app (its modules, paths, tokens, names or rules) stays in that app, and reaches heartwood only as a setting or an argument. Test fixtures in `test/support/` may come from one app, and say whose they are.
+Code shared by Oak Compendium (`~/dev/oaks`) and Gallformers (`~/dev/gallformers`). What's here is used by both, so it must fit both: anything specific to one app (its modules, paths, tokens, names or rules) stays in that app, and reaches heartwood only as a setting or an argument. Test fixtures (in `test/support/`, and the preview's in `ui/dev.exs` and `ui/dev/`) may come from one app, and say whose they are.
 
 ## Working here
 
 - **Run everything inside the Nix dev shell** (direnv, or `nix develop -c <cmd>`): the same Elixir and OTP as both apps.
-- **Each package is its own Mix project** in its folder (`guardrails/`); run mix there.
-- **`make done-checks` must pass** before work is finished: each package's `mix precommit` (format, compile with warnings as errors, `credo --strict`, unused deps, tests), Dialyzer and the security audits. CI requires the same.
+- **Each package is its own Mix project** in its folder (`guardrails/`, `ui/`); run mix there.
+- **`make done-checks` must pass** before work is finished: each package's `mix precommit` (format, compile with warnings as errors, `credo --strict`, unused deps, tests), Dialyzer and the security audits, and `heartwood_ui`'s browser tests. CI requires the same.
 - **Search before you write.** Look in the packages for code that already does the job before adding a module, function or script.
+- **Components are tried and tested in a real browser**: `heartwood_ui`'s preview (`mix dev` in `ui/`) shows each one in every state and in both apps' themes, and its Playwright tests run against it. Node and npm are for those tests only; the apps never need them.
 - **Scripts and hooks are tested** by running them for real (git in throwaway repositories, `check-toolchain` against fixture roots). A change to one changes its test.
 - **Prose isn't hard-wrapped:** one line per paragraph or list item, in docs, READMEs, changelogs and commit message bodies. Code comments follow the file.
 
