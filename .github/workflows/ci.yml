@@ -20,8 +20,28 @@ permissions:
   contents: read
 
 jobs:
+  # Which packages the change touches (.github/actions/changes): a pull
+  # request that changes only prose skips the jobs below, and a skipped job
+  # still satisfies a required check. If this job fails, they all run: a job
+  # skipped for a failure would satisfy its required check too.
+  changes:
+    name: CI changes
+    runs-on: ubuntu-latest
+    outputs:
+      guardrails: ${{ steps.changes.outputs.guardrails }}
+      ui: ${{ steps.changes.outputs.ui }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - id: changes
+        uses: ./.github/actions/changes
+
   guardrails:
     name: heartwood_guardrails
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.guardrails == 'true') }}
     runs-on: ubuntu-latest
 
     defaults:
@@ -58,6 +78,8 @@ jobs:
   # rebuilt only when deps or the toolchain change.
   dialyzer:
     name: Dialyzer
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.guardrails == 'true') }}
     runs-on: ubuntu-latest
 
     defaults:
@@ -95,6 +117,8 @@ jobs:
 
   ui:
     name: heartwood_ui
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.ui == 'true') }}
     runs-on: ubuntu-latest
 
     defaults:
@@ -129,6 +153,8 @@ jobs:
 
   ui-dialyzer:
     name: heartwood_ui Dialyzer
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.ui == 'true') }}
     runs-on: ubuntu-latest
 
     defaults:
@@ -169,6 +195,8 @@ jobs:
   # libraries it needs from apt.
   ui-browser:
     name: heartwood_ui browser tests
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.ui == 'true') }}
     runs-on: ubuntu-latest
 
     defaults:

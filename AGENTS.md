@@ -27,6 +27,6 @@ Never force-push, and never push main; the pre-push hook blocks both. Changes re
 
 - **The contract** is what each package's README lists under "Contract". A change to it gets an entry in that package's CHANGELOG.md, under "Unreleased", with "Upgrade:" steps when an app has to do something.
 - **Versions** are tags, `v0.y.z`, one series for both packages. While it's 0.x, a change that needs action from an app is a minor version; a drop-in is a patch. A package's `@version` in `mix.exs` matches the tag that releases it.
-- **A release** is a tag on main, after Jeff merges, made with Jeff's go-ahead: the changelog's "Unreleased" becomes the version and date, and the tag is pushed (`git push origin vX.Y.Z`).
+- **A release** rides in the PR whose change it releases: that PR's last commit turns the changelog's "Unreleased" into the version and date. After Jeff merges it, and with his go-ahead, the merge commit on main is tagged and the tag pushed (`git push origin vX.Y.Z`). No separate release PR.
 - **A change is done** when it's tagged with its changelog entry, the app that needed it is on the new tag with its checks passing, and the other app either is too or has an entry in its `docs/backlog.md` ("Upgrade heartwood to vX.Y.Z: <steps>").
 - **A bug found in an app** is fixed here, with the app pointed at this checkout (`HEARTWOOD_PATH=~/dev/heartwood`), never in the app's `deps/`.
