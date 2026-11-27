@@ -14,7 +14,7 @@ Code shared by Oak Compendium (`~/dev/oaks`) and Gallformers (`~/dev/gallformers
 
 ## Before you commit
 
-The pre-commit hook (`dev/githooks/`, installed by `make hooks`) blocks a commit without a passing reuse review. A commit touching only `docs/`, the READMEs or the changelogs needs none.
+The pre-commit hook (`dev/githooks/`, installed by `make hooks`) blocks a commit without a passing reuse review. A commit touching only prose needs none: Markdown, AGENTS.md and CLAUDE.md included, and `LICENSE` (`HEARTWOOD_PROSE` in `dev/guardrails/config.sh`), except the reviewers' instructions in `guardrails/review/`.
 
 1. Stage files by name, then run `guardrails/bin/review-packet`.
 2. A reviewer with fresh context, not yours, follows the packet and records its verdict.

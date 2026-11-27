@@ -15,11 +15,6 @@ defmodule Heartwood.Guardrails.ChangesTest do
     %{dir: init!(Path.join(tmp, "app"))}
   end
 
-  defp settings!(dir, lines) do
-    path = Path.join(dir, "dev/guardrails/config.sh")
-    File.write!(path, File.read!(path) <> lines)
-  end
-
   # Commits only the paths given (nil deletes one), leaving the app's own
   # setup (dev/, deps/) out of the change.
   defp commit!(dir, changes) do
@@ -112,6 +107,13 @@ defmodule Heartwood.Guardrails.ChangesTest do
       assert {%{"code" => "false"}, 0} = changes(dir, [], "lib/notes.md\ndocs/guide.md")
       assert {%{"code" => "true"}, 0} = changes(dir, [], "prompts/lem.md")
       assert {%{"code" => "true"}, 0} = changes(dir, [], "docs/fixtures/page.md")
+    end
+
+    test "HEARTWOOD_CODE, the commit gate's exceptions, are code to CI too", %{dir: dir} do
+      settings!(dir, ~s(HEARTWOOD_PROSE="*.md"\nHEARTWOOD_CODE="prompts/"\n))
+
+      assert {%{"code" => "false"}, 0} = changes(dir, [], "lib/notes.md\nAGENTS.md")
+      assert {%{"code" => "true"}, 0} = changes(dir, [], "prompts/lem.md")
     end
   end
 

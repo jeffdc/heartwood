@@ -10,19 +10,19 @@ HEARTWOOD_APP=heartwood
 # unset: deps/heartwood_guardrails/guardrails.
 HEARTWOOD_HOME=guardrails
 
-# Paths a commit may touch without a reuse review: a directory ends in /,
-# anything else is one file. AGENTS.md and CLAUDE.md are always reviewed.
-HEARTWOOD_PROSE="docs/ README.md guardrails/README.md guardrails/CHANGELOG.md ui/README.md ui/CHANGELOG.md"
+# Paths a commit may touch without a reuse review, and that CI skips for: a
+# directory ends in /, anything else is one file or a pattern, where *
+# matches across / (*.md is every Markdown file). HEARTWOOD_CODE takes back
+# the ones code reads: the reviewers' instructions go into the review
+# packets, which the tests check. This repository's checklists in
+# dev/guardrails/ go into the packets too, but no test reads them, so like
+# AGENTS.md they are prose.
+HEARTWOOD_PROSE="docs/ *.md LICENSE"
+HEARTWOOD_CODE="guardrails/review/"
 
-# CI (guardrails/bin/changes, guardrails/actions/changes): files that are
-# prose to CI though the commit gate still reviews them (matched like
-# HEARTWOOD_PROSE, where *.md is every Markdown file), the ones among them
-# that code reads, and the areas a change's code is split into, each a
-# "name=path/". A path outside every area touches them all.
-HEARTWOOD_CI_PROSE="*.md LICENSE"
-# The reviewers' instructions go into the review packets, which the tests
-# check.
-HEARTWOOD_CI_CODE="guardrails/review/"
+# CI (guardrails/bin/changes, guardrails/actions/changes): the areas a
+# change's code is split into, each a "name=path/". A path outside every
+# area touches them all.
 HEARTWOOD_CI_AREAS="guardrails=guardrails/ ui=ui/"
 # Changes to the classifier itself run everything. heartwood's workflows use
 # main's classifier, so a pull request's changes to the classifier's code

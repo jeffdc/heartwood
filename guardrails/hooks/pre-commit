@@ -7,7 +7,8 @@
 # <git dir>/<app>-review/<tree>.md with "verdict: pass", recorded by
 # bin/record-review from bin/review-packet's packet. Restaging changes the
 # tree, so a fixed change is reviewed again. A commit that concludes a merge
-# goes through, and so does one touching only prose (HEARTWOOD_PROSE).
+# goes through, and so does one touching only prose (HEARTWOOD_PROSE, less
+# HEARTWOOD_CODE).
 #
 # Also blocks a staged mix.lock without heartwood's entries: a local
 # HEARTWOOD_PATH checkout drops them, and the next `mix deps.get` would fail.
@@ -24,6 +25,7 @@ fi
 . "$config"
 app=${HEARTWOOD_APP:-heartwood}
 prose=${HEARTWOOD_PROSE:-docs/ README.md}
+code=${HEARTWOOD_CODE:-}
 
 [[ -f "$git_dir/MERGE_HEAD" ]] && exit 0
 
@@ -44,16 +46,10 @@ if grep -qx "mix.lock" <<<"$files" && grep -q ":heartwood_" "$top/mix.exs" 2>/de
   exit 1
 fi
 
-# AGENTS.md and CLAUDE.md hold rules, so they are always reviewed.
-is_prose() {
-  case "$1" in AGENTS.md | CLAUDE.md) return 1 ;; esac
-  heartwood_is_prose "$prose" "$1"
-}
-
 if [[ -n "$files" ]]; then
   prose_only=1
   while IFS= read -r file; do
-    is_prose "$file" || prose_only=0
+    heartwood_counts_as_prose "$prose" "$code" "$file" || prose_only=0
   done <<<"$files"
   [[ $prose_only == 1 ]] && exit 0
 fi

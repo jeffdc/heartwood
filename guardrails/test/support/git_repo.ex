@@ -95,6 +95,13 @@ defmodule Heartwood.Test.GitRepo do
     File.write!(full, contents)
   end
 
+  @doc "Adds `lines` to the app's settings, `dev/guardrails/config.sh`."
+  @spec settings!(Path.t(), String.t()) :: :ok
+  def settings!(dir, lines) do
+    path = Path.join(dir, "dev/guardrails/config.sh")
+    File.write!(path, File.read!(path) <> lines)
+  end
+
   @doc "HEAD's commit."
   @spec head(Path.t()) :: String.t()
   def head(dir), do: dir |> git!(["rev-parse", "HEAD"]) |> String.trim()
