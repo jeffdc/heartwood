@@ -2,7 +2,7 @@
 
 Every release that changes `heartwood_guardrails`, newest first. An entry that needs something from an app has "Upgrade:" steps. Versions are heartwood's tags (`v0.y.z`, one series for every package); while it's 0.x, a minor version needs action from an app and a patch is a drop-in.
 
-## Unreleased: v0.1.0
+## v0.1.0 (2026-11-26)
 
 The first release: gallformers' guardrails (taxogall, 2026-11-26), with what was specific to gallformers made into settings.
 
